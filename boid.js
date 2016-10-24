@@ -36,7 +36,7 @@ Boid.prototype.adjustHeading = function(flock, dt) {
   this.heading = (1 - timeSensitivity) * this.heading + timeSensitivity * this.heading;
 
   if(this.y > MAX_Y) {
-    this.heading = -MATH.PI / 2;
+    this.heading = -Math.PI / 2;
   }
 };
 

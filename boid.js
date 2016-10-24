@@ -39,3 +39,23 @@ Boid.prototype.adjustHeading = function(flock, dt) {
     this.heading = -MATH.PI / 2;
   }
 };
+
+var Flock = function(boidCount, xMin, xMax) {
+  this.boids = [];
+  for(var i = 0; i < boidCount; i++) {
+    var x = Math.random() * (xMax - xMin) + xMax;
+    var y = Math.random() * MAX_Y;
+    var heading = Math.random() * Math.PI * 2;
+    boids.push(new Boid(x, y, 10, heading));
+  }
+}
+
+Flock.prototype.update = function(dt) {
+  for(var i = 0; i < this.boids.length; i++) {
+    this.boids[i].adjustHeading(this.boids, dt);
+  }
+
+  for(var i = 0; i < this.boids.length; i++) {
+    this.boids[i].step(dt);
+  }
+};

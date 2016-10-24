@@ -7,7 +7,7 @@ var Boid = function(x, y, initialVelocity, initialHeading) {
   this.y = y;
   this.velocity = initialVelocity;
   this.heading = initialHeading;
-}
+};
 
 Boid.prototype.step = function(dt) {
   this.x += dt * this.velocity * Math.cos(this.heading);
@@ -48,14 +48,16 @@ var Flock = function(boidCount, xMin, xMax) {
     var heading = Math.random() * Math.PI * 2;
     boids.push(new Boid(x, y, 10, heading));
   }
-}
+};
 
 Flock.prototype.update = function(dt) {
-  for(var i = 0; i < this.boids.length; i++) {
+  var i;
+
+  for(i = 0; i < this.boids.length; i++) {
     this.boids[i].adjustHeading(this.boids, dt);
   }
 
-  for(var i = 0; i < this.boids.length; i++) {
+  for(i = 0; i < this.boids.length; i++) {
     this.boids[i].step(dt);
   }
 };

@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "boids": "^2.0.0"
+  },
+  "scripts": {
+    "start": "browserify sim.js > bundle.js"
+  },
+  "devDependencies": {
+    "browserify": "^13.1.1"
+  }
+}

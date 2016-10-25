@@ -13,4 +13,4 @@ var pubsub = new faye.NodeAdapter({
 });
 pubsub.attach(app);
 
-console.log('And we\'re ready!');
+console.log('And we\'re ready! Go check out localhost:8080');

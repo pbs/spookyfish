@@ -1,27 +1,30 @@
 var viewport = require('./viewport');
 var flock = require('./flock');
 
-var SIZE = 500;
+var boundingRect = document.body.getBoundingClientRect();
+var WIDTH = boundingRect.width;
+var HEIGHT = boundingRect.height;
+
 var canvas = document.querySelector('canvas');
 var ctx = canvas.getContext('2d');
-canvas.setAttribute('width', SIZE);
-canvas.setAttribute('width', SIZE);
+canvas.setAttribute('width', WIDTH);
+canvas.setAttribute('height', HEIGHT);
 
 viewport.setElement(canvas);
-viewport.setBoundaries(200, 200, 300, 300);
+viewport.setBoundaries(0, 0, WIDTH, HEIGHT);
 
-flock.init(SIZE);
+flock.init(WIDTH);
 flock.addAttractor(250, 250, 50, 0.25);
 
-for(var i = 0; i < SIZE; i += 10) {
-  flock.addRepeller(i, SIZE, SIZE * 0.01, 10);
+for(var i = 0; i < WIDTH; i += 10) {
+  flock.addRepeller(i, WIDTH, WIDTH * 0.01, 10);
 }
 
 var animate = function() {
   flock.tick();
 
   // re-render
-  ctx.clearRect(0, 0, SIZE, SIZE);
+  ctx.clearRect(0, 0, WIDTH, WIDTH);
   ctx.fillStyle = 'black';
   flock
     .boids()

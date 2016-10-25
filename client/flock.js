@@ -14,9 +14,6 @@ module.exports = {
       separationForce: 0.15,  // Speed to avoid at 
       alignmentForce: 0.25,   // Speed to align with other boids 
       choesionForce: 0.1,     // Speed to move towards other boids 
-      attractors: [
-        [size / 2, size / 2, 50, 0.25]
-      ]
     });
 
     flock.boids.forEach(function(boid) {
@@ -31,5 +28,9 @@ module.exports = {
 
   boids: function() {
     return flock.boids;
+  },
+
+  addAttractor: function(x, y, radius, force) {
+    flock.attractors.push([x, y, radius, Math.abs(force)]);
   }
 };

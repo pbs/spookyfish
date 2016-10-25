@@ -7,6 +7,7 @@ canvas.setAttribute('width', SIZE);
 canvas.setAttribute('width', SIZE);
 
 flock.init(SIZE);
+flock.addAttractor(250, 250, 50, 0.25);
 
 var animate = function() {
   flock.tick();

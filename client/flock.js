@@ -54,5 +54,11 @@ module.exports = {
 
   reportEntireFlock: function() {
     // TODO: Send flock.boids over the wire
-  }
+  },
+
+  receiveVisibleFlockUpdate: function(boidSet) {
+    Object.keys(boidSet).forEach(function(index) {
+      flock.boids[index] = boidSet[index];
+    });
+  },
 };

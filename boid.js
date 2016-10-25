@@ -16,7 +16,6 @@ Boid.prototype.step = function(dt) {
 };
 
 Boid.prototype.adjustHeading = function(flock, dt) {
-  var neighborCount = 0;
   var neighborX = 0;
   var neighborY = 0;
   for(var i = 0; i < flock.length; i++) {

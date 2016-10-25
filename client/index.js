@@ -1,12 +1,12 @@
 var viewport = require('./viewport');
 var flock = require('./flock');
+var animate = require('./animate');
 
 var boundingRect = document.body.getBoundingClientRect();
 var WIDTH = boundingRect.width;
 var HEIGHT = boundingRect.height;
 
 var canvas = document.querySelector('canvas');
-var ctx = canvas.getContext('2d');
 canvas.setAttribute('width', WIDTH);
 canvas.setAttribute('height', HEIGHT);
 
@@ -20,21 +20,5 @@ for(var i = 0; i < WIDTH; i += 10) {
   flock.addRepeller(i, WIDTH, WIDTH * 0.01, 10);
 }
 
-var animate = function() {
-  flock.tick();
-
-  // re-render
-  ctx.clearRect(0, 0, WIDTH, WIDTH);
-  ctx.fillStyle = 'black';
-  flock
-    .boids()
-    .filter(viewport.containsBoid)
-    .map(viewport.toLocalCoords)
-    .forEach(function(boid) {
-      ctx.fillRect(boid[0], boid[1], 2, 2);
-    });
-
-  requestAnimationFrame(animate);
-}
-
-requestAnimationFrame(animate);
+animate.init();
+requestAnimationFrame(animate.update.bind(animate));

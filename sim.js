@@ -22,6 +22,11 @@ var flock = boids({
   ]
 });
 
+flock.boids.forEach(function(boid) {
+  boid[0] = Math.random() * SIZE;
+  boid[1] = Math.random() * SIZE;
+});
+
 var animate = function() {
   flock.tick();
 

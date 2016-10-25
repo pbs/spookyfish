@@ -39,7 +39,7 @@ module.exports = {
     flock.attractors.push([x, y, radius, -Math.abs(force)]);
   },
 
-  reportFlock: function() {
+  reportVisibleFlock: function() {
     var serializedFlockData = {};
     for(var i = 0; i < flock.boids.length; i++) {
       if(!viewport.containsBoid(flock.boids[i])) {
@@ -51,4 +51,8 @@ module.exports = {
 
     // TODO: Send this over a socket!
   },
+
+  reportEntireFlock: function() {
+    // TODO: Send flock.boids over the wire
+  }
 };

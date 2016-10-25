@@ -1,10 +1,11 @@
-var BOID_SPEED = 40;
+var BOID_SPEED = 60;
 var MAX_Y = 100;
 
 // Boid parameters
-var AVOIDANCE = 1;
+var AVOIDANCE = 0;
 var COHESION = 1;
 var ALIGNMENT = 1;
+var ATTRACTION = 1;
 
 var Boid = function(x, y, initialVelocity, initialHeading) {
   this.x = x;
@@ -18,7 +19,7 @@ Boid.prototype.step = function(dt) {
   this.y += dt * this.velocity * Math.sin(this.heading);
 };
 
-Boid.prototype.adjustHeading = function(flock, dt) {
+Boid.prototype.adjustHeading = function(flock, attractionPointX, attractionPointY, dt) {
   var neighborPosition = [0, 0];
   var averageNeighborHeading = 0;
 
@@ -36,8 +37,16 @@ Boid.prototype.adjustHeading = function(flock, dt) {
   var avoidanceHeading = Math.atan2(dyToNeighbors, dxToNeighbors) + Math.PI;
   var cohesionHeading = Math.atan2(dyToNeighbors, dxToNeighbors);
   var alignmentHeading = averageNeighborHeading / flock.length;
+  var attractionHeading = Math.atan2(attractionPointY - this.y, attractionPointX - this.x);
 
-  this.heading = (AVOIDANCE * avoidanceHeading + COHESION * cohesionHeading + ALIGNMENT * alignmentHeading) / (AVOIDANCE + COHESION + ALIGNMENT);
+  var newHeading = 0;
+  newHeading += AVOIDANCE * avoidanceHeading;
+  newHeading += COHESION * cohesionHeading;
+  newHeading += ALIGNMENT * alignmentHeading;
+  newHeading += ATTRACTION * attractionHeading;
+  newHeading /= (AVOIDANCE + COHESION + ALIGNMENT + ATTRACTION);
+
+  this.heading = newHeading;
 };
 
 var Flock = function(boidCount, xMin, xMax) {
@@ -54,7 +63,7 @@ Flock.prototype.update = function(dt) {
   var i;
 
   for(i = 0; i < this.boids.length; i++) {
-    this.boids[i].adjustHeading(this.boids, dt);
+    this.boids[i].adjustHeading(this.boids, 200, 200, dt);
   }
 
   for(i = 0; i < this.boids.length; i++) {

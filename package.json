@@ -1,6 +1,8 @@
 {
   "dependencies": {
-    "boids": "^2.0.0"
+    "boids": "^2.0.0",
+    "express": "^4.14.0",
+    "faye": "^1.2.3"
   },
   "scripts": {
     "start": "browserify client/index.js > bundle.js"

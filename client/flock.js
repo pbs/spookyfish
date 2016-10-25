@@ -4,7 +4,7 @@ var viewport = require('./viewport');
 var flock = null;
 
 module.exports = {
-  init: function(size) {
+  init: function(width, height) {
     flock = boids({
       boids: 200,              // The amount of boids to use 
       speedLimit: 2,          // Max steps to take per tick 
@@ -18,8 +18,8 @@ module.exports = {
     });
 
     flock.boids.forEach(function(boid) {
-      boid[0] = Math.random() * size;
-      boid[1] = Math.random() * size;
+      boid[0] = Math.random() * width;
+      boid[1] = Math.random() * height;
     });
   },
 

@@ -13,7 +13,7 @@ canvas.setAttribute('height', HEIGHT);
 viewport.setElement(canvas);
 viewport.setBoundaries(0, 0, WIDTH, HEIGHT);
 
-flock.init(WIDTH);
+flock.init(WIDTH, HEIGHT);
 flock.addAttractor(250, 250, 50, 0.25);
 
 for(var i = 0; i < WIDTH; i += 10) {

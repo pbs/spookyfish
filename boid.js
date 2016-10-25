@@ -34,7 +34,7 @@ Boid.prototype.adjustHeading = function(flock, dt) {
   var neighborHeading = Math.atan2(neighborY, neighborX);
 
   var timeSensitivity = TURN_SENSITIVITY * dt;
-  this.heading = (1 - timeSensitivity) * this.heading + timeSensitivity * this.heading;
+  this.heading = (1 - timeSensitivity) * this.heading + timeSensitivity * neighborHeading;
 
   if(this.y > MAX_Y) {
     this.heading = -Math.PI / 2;

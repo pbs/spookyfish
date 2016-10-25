@@ -1,5 +1,6 @@
 var NEIGHBOR_DISTANCE = 10;
 var TURN_SENSITIVITY = 0.5;
+var BOID_SPEED = 40;
 var MAX_Y = 100;
 
 var Boid = function(x, y, initialVelocity, initialHeading) {
@@ -46,7 +47,7 @@ var Flock = function(boidCount, xMin, xMax) {
     var x = Math.random() * (xMax - xMin) + xMin;
     var y = Math.random() * MAX_Y;
     var heading = Math.random() * Math.PI * 2;
-    this.boids.push(new Boid(x, y, 10, heading));
+    this.boids.push(new Boid(x, y, BOID_SPEED, heading));
   }
 };
 

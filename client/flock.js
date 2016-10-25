@@ -32,5 +32,9 @@ module.exports = {
 
   addAttractor: function(x, y, radius, force) {
     flock.attractors.push([x, y, radius, Math.abs(force)]);
+  },
+
+  addRepeller: function(x, y, radius, force) {
+    flock.attractors.push([x, y, radius, -Math.abs(force)]);
   }
 };

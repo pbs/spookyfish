@@ -9,6 +9,10 @@ canvas.setAttribute('width', SIZE);
 flock.init(SIZE);
 flock.addAttractor(250, 250, 50, 0.25);
 
+for(var i = 0; i < SIZE; i += 10) {
+  flock.addRepeller(i, SIZE, SIZE * 0.01, 10);
+}
+
 var animate = function() {
   flock.tick();
 

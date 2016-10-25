@@ -6,15 +6,15 @@ var flock = null;
 module.exports = {
   init: function(width, height) {
     flock = boids({
-      boids: 200,              // The amount of boids to use 
+      boids: 20,              // The amount of boids to use 
       speedLimit: 2,          // Max steps to take per tick 
-      accelerationLimit: 0.1,   // Max acceleration per tick 
+      accelerationLimit: 0.2,   // Max acceleration per tick 
       separationDistance: 60, // Radius at which boids avoid others 
       alignmentDistance: 180, // Radius at which boids align with others 
-      choesionDistance: 180,  // Radius at which boids approach others 
-      separationForce: 0.15,  // Speed to avoid at 
+      cohesionDistance: 180,  // Radius at which boids approach others 
+      separationForce: 0.05,  // Speed to avoid at 
       alignmentForce: 0.25,   // Speed to align with other boids 
-      choesionForce: 0.1,     // Speed to move towards other boids 
+      choesionForce: 0.5,     // Speed to move towards other boids 
     });
 
     flock.boids.forEach(function(boid) {

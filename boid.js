@@ -43,7 +43,7 @@ Boid.prototype.adjustHeading = function(flock, dt) {
 var Flock = function(boidCount, xMin, xMax) {
   this.boids = [];
   for(var i = 0; i < boidCount; i++) {
-    var x = Math.random() * (xMax - xMin) + xMax;
+    var x = Math.random() * (xMax - xMin) + xMin;
     var y = Math.random() * MAX_Y;
     var heading = Math.random() * Math.PI * 2;
     this.boids.push(new Boid(x, y, 10, heading));

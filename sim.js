@@ -18,7 +18,7 @@ var flock = boids({
   alignmentForce: 0.25,   // Speed to align with other boids 
   choesionForce: 0.1,     // Speed to move towards other boids 
   attractors: [
-    [SIZE / 2, SIZE / 2]
+    [SIZE / 2, SIZE / 2, 50, 0.25]
   ]
 });
 

@@ -3,6 +3,8 @@ var faye = require('faye');
 
 var app = express();
 
+app.use(express.static('public'));
+
 console.log('Starting express app...');
 app.listen(8080);
 

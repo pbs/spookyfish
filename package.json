@@ -3,7 +3,7 @@
     "boids": "^2.0.0"
   },
   "scripts": {
-    "start": "browserify sim.js > bundle.js"
+    "start": "browserify client/index.js > bundle.js"
   },
   "devDependencies": {
     "browserify": "^13.1.1"

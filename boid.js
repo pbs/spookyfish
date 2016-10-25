@@ -1,7 +1,10 @@
-var NEIGHBOR_DISTANCE = 10;
-var TURN_SENSITIVITY = 0.5;
 var BOID_SPEED = 40;
 var MAX_Y = 100;
+
+// Boid parameters
+var AVOIDANCE = 1;
+var COHESION = 1;
+var ALIGNMENT = 1;
 
 var Boid = function(x, y, initialVelocity, initialHeading) {
   this.x = x;
@@ -16,28 +19,25 @@ Boid.prototype.step = function(dt) {
 };
 
 Boid.prototype.adjustHeading = function(flock, dt) {
-  var neighborX = 0;
-  var neighborY = 0;
+  var neighborPosition = [0, 0];
+  var averageNeighborHeading = 0;
+
   for(var i = 0; i < flock.length; i++) {
-    var dx = this.x - flock[i].x;
-    var dy = this.y - flock[i].y;
-
-    if( (dx * dx + dy * dy) > NEIGHBOR_DISTANCE) {
-      continue;
-    }
-
-    neighborX += dx;
-    neighborY += dy;
+    neighborPosition[0] += flock[i].x;
+    neighborPosition[1] += flock[i].y;
+    averageNeighborHeading += flock[i].heading;
   }
 
-  var neighborHeading = Math.atan2(neighborY, neighborX);
+  neighborPosition[0] /= flock.length;
+  neighborPosition[1] /= flock.length;
+  var dxToNeighbors = neighborPosition[0] - this.x;
+  var dyToNeighbors = neighborPosition[1] - this.y;
+  
+  var avoidanceHeading = Math.atan2(dyToNeighbors, dxToNeighbors) + Math.PI;
+  var cohesionHeading = Math.atan2(dyToNeighbors, dxToNeighbors);
+  var alignmentHeading = averageNeighborHeading / flock.length;
 
-  var timeSensitivity = TURN_SENSITIVITY * dt;
-  this.heading = (1 - timeSensitivity) * this.heading + timeSensitivity * neighborHeading;
-
-  if(this.y > MAX_Y) {
-    this.heading = -Math.PI / 2;
-  }
+  this.heading = (AVOIDANCE * avoidanceHeading + COHESION * cohesionHeading + ALIGNMENT * alignmentHeading) / (AVOIDANCE + COHESION + ALIGNMENT);
 };
 
 var Flock = function(boidCount, xMin, xMax) {

@@ -6,7 +6,9 @@ var canvas = document.querySelector('canvas');
 var ctx = canvas.getContext('2d');
 canvas.setAttribute('width', SIZE);
 canvas.setAttribute('width', SIZE);
-viewport.set(0, 0, 500, 500);
+
+viewport.setElement(canvas);
+viewport.setBoundaries(200, 200, 300, 300);
 
 flock.init(SIZE);
 flock.addAttractor(250, 250, 50, 0.25);

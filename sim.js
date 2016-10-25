@@ -12,4 +12,8 @@ var animate = function() {
   for(var i = 0; i < flock.boids.length; i++) {
     ctx.fillRect(flock.boids[i].x, flock.boids[i].y, 1, 1);
   }
+
+  requestAnimationFrame(animate);
 }
+
+requestAnimationFrame(animate);

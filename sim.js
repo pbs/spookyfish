@@ -9,8 +9,9 @@ var animate = function() {
 
   // re-render
   ctx.clearRect(0, 0, 400, 400);
+  ctx.fillStyle = 'black';
   for(var i = 0; i < flock.boids.length; i++) {
-    ctx.fillRect(flock.boids[i].x, flock.boids[i].y, 1, 1);
+    ctx.fillRect(flock.boids[i].x, flock.boids[i].y, 2, 2);
   }
 
   requestAnimationFrame(animate);

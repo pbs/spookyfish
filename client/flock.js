@@ -1,4 +1,5 @@
 var boids = require('boids');
+var viewport = require('./viewport');
 
 var flock = null;
 
@@ -36,5 +37,18 @@ module.exports = {
 
   addRepeller: function(x, y, radius, force) {
     flock.attractors.push([x, y, radius, -Math.abs(force)]);
-  }
+  },
+
+  reportFlock: function() {
+    var serializedFlockData = {};
+    for(var i = 0; i < flock.boids.length; i++) {
+      if(!viewport.containsBoid(flock.boids[i])) {
+        continue;
+      }
+
+      serializedFlockData[i] = flock.boids[i];
+    }
+
+    // TODO: Send this over a socket!
+  },
 };

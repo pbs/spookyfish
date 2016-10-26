@@ -5,7 +5,7 @@ var subscribers = [];
 
 module.exports = {
   init: function() {
-    client = new faye.Client(location.origin + 'faye');
+    client = new faye.Client(location.origin + '/faye');
     client.subscribe('/events', function(data) {
       subscribers.forEach(function(func) {
         func(data);

@@ -25,7 +25,7 @@ module.exports = {
   },
 
   draw: function() {
-    ctx.clearRect(0, 0, WIDTH, WIDTH);
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
     ctx.fillStyle = 'black';
     flock
       .boids()

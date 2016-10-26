@@ -1,18 +1,22 @@
+var http = require('http');
 var express = require('express');
 var faye = require('faye');
 var flockManager = require('./flock-manager');
 
 console.log('Starting express app...');
 var app = express();
+var server = http.createServer(app);
+
 app.use(express.static('public'));
-app.listen(8080);
 
 console.log('Starting up faye...');
 var pubsub = new faye.NodeAdapter({
   mount: '/faye',
   timeout: 45,
 });
-pubsub.attach(app);
+pubsub.attach(server);
+
+server.listen(8080);
 
 console.log('Starting flock manager');
 flockManager.init(pubsub.getClient(), 500, 500);

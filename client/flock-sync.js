@@ -12,7 +12,7 @@ module.exports = {
 
   receiveVisibleFlockUpdate: function(newBoids) {
     for(var i = 0; i < newBoids.length; i++) {
-      flock.boids()[i] = deadReckoning.zerothOrder(flock.boids()[i], newBoids[i]);
+      flock.boids()[i] = deadReckoning.firstOrder(flock.boids()[i], newBoids[i]);
     }
   }
 };

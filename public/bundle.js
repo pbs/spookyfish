@@ -26,19 +26,21 @@ module.exports = {
   },
 
   draw: function() {
-    ctx.clearRect(0, 0, WIDTH, WIDTH);
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
     ctx.fillStyle = 'black';
     flock
       .boids()
       .filter(viewport.containsBoid)
       .map(viewport.toLocalCoords)
       .forEach(function(boid) {
-        ctx.fillRect(boid[0], boid[1], 2, 2);
+        ctx.fillRect(boid[0], boid[1], 4, 4);
       });
   },
 };
 
 },{"../shared/flock":48,"./viewport":6}],2:[function(require,module,exports){
+var dt = 1 / 60;
+
 module.exports = {
   zerothOrder: function(localBoid, actualBoid) {
     return actualBoid;
@@ -48,12 +50,26 @@ module.exports = {
     return [
       localBoid[0],
       localBoid[1],
-      actualBoid[2],
-      actualBoid[3],
+      (actualBoid[0] - localBoid[0]) / dt + actualBoid[0],
+      (actualBoid[1] - localBoid[1]) / dt + actualBoid[1],
       actualBoid[4],
       actualBoid[5],
     ];
-  }
+  },
+
+  secondOrder: function(localBoid, actualBoid) {
+    var ax = 2 / dt / dt * (actualBoid[0] - localBoid[0] + dt * (actualBoid[1] - localBoid[1]));
+    var ay = 2 / dt / dt * (actualBoid[1] - localBoid[1] + dt * (actualBoid[1] - localBoid[1]));
+
+    return [
+      localBoid[0],
+      localBoid[1],
+      localBoid[2],
+      localBoid[3],
+      ax,
+      ay
+    ];
+  },
 };
 
 },{}],3:[function(require,module,exports){
@@ -70,9 +86,20 @@ module.exports = {
   },
 
   receiveVisibleFlockUpdate: function(newBoids) {
+    var totalDistanceError = 0;
     for(var i = 0; i < newBoids.length; i++) {
-      flock.boids()[i] = deadReckoning.firstOrder(flock.boids()[i], newBoids[i]);
+      var dx = flock.boids()[i][0] - newBoids[i][0];
+      var dy = flock.boids()[i][1] - newBoids[i][1];
+      var distanceError = Math.sqrt(dx * dx + dy * dy);
+      totalDistanceError += distanceError;
+
+      if(distanceError > 20) {
+        flock.boids()[i] = deadReckoning.zerothOrder(flock.boids()[i], newBoids[i]);
+      } else {
+        flock.boids()[i] = deadReckoning.secondOrder(flock.boids()[i], newBoids[i]);
+      }
     }
+    console.log('Average position error:', totalDistanceError / newBoids.length);
   }
 };
 
@@ -91,14 +118,18 @@ var canvas = document.querySelector('canvas');
 canvas.setAttribute('width', WIDTH);
 canvas.setAttribute('height', HEIGHT);
 
+var screenPosition = Number(location.hash.substring(1))
+if(isNaN(screenPosition)) {
+  screenPosition = 0;
+}
+var screenLeft = screenPosition * 250;
+var screenRight = screenLeft + 250;
+
 viewport.setElement(canvas);
-viewport.setBoundaries(0, 0, WIDTH, HEIGHT);
+viewport.setBoundaries(0, screenLeft, HEIGHT, screenRight);
+window.viewport = viewport;
 
 flock.init(WIDTH, HEIGHT);
-flock.addAttractor(250, 250, 50, 0.25);
-for(var i = 0; i < WIDTH; i += 10) {
-  flock.addRepeller(i, WIDTH, WIDTH * 0.01, 10);
-}
 
 messages.init();
 flockSync.init();
@@ -147,6 +178,8 @@ module.exports = {
     left = newLeft;
     bottom = newBottom;
     right = newRight;
+
+    console.log(top, left, bottom, right);
 
     viewportWidth = right - left;
     viewportHeight = bottom - top;

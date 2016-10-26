@@ -1,5 +1,5 @@
 var viewport = require('./viewport');
-var flock = require('./flock');
+var flock = require('../shared/flock');
 
 var boundingRect;
 var WIDTH;

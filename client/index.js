@@ -20,7 +20,7 @@ var screenLeft = screenPosition * 250;
 var screenRight = screenLeft + 250;
 
 viewport.setElement(canvas);
-viewport.setBoundaries(screenLeft, 0, screenRight, HEIGHT);
+viewport.setBoundaries(0, screenLeft, HEIGHT, screenRight);
 window.viewport = viewport;
 
 flock.init(WIDTH, HEIGHT);

@@ -39,23 +39,6 @@ module.exports = {
     flock.attractors.push([x, y, radius, -Math.abs(force)]);
   },
 
-  reportVisibleFlock: function() {
-    var serializedFlockData = {};
-    for(var i = 0; i < flock.boids.length; i++) {
-      if(!viewport.containsBoid(flock.boids[i])) {
-        continue;
-      }
-
-      serializedFlockData[i] = flock.boids[i];
-    }
-
-    // TODO: Send this over a socket!
-  },
-
-  reportEntireFlock: function() {
-    // TODO: Send flock.boids over the wire
-  },
-
   receiveVisibleFlockUpdate: function(boidSet) {
     Object.keys(boidSet).forEach(function(index) {
       flock.boids[index] = boidSet[index];

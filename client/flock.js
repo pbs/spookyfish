@@ -1,5 +1,6 @@
 var boids = require('boids');
 var viewport = require('./viewport');
+var deadReckoning = require('./dead-reckoning');
 
 var flock = null;
 
@@ -39,9 +40,9 @@ module.exports = {
     flock.attractors.push([x, y, radius, -Math.abs(force)]);
   },
 
-  receiveVisibleFlockUpdate: function(boidSet) {
-    Object.keys(boidSet).forEach(function(index) {
-      flock.boids[index] = boidSet[index];
-    });
+  receiveVisibleFlockUpdate: function(newBoids) {
+    for(var i = 0; i < newBoids.length; i++) {
+      flock.boids[i] = deadReckoning.zerothOrder(flock.boids[i], newBoids[i]);
+    }
   },
 };

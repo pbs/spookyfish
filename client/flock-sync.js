@@ -11,8 +11,14 @@ module.exports = {
   },
 
   receiveVisibleFlockUpdate: function(newBoids) {
+    var totalDistanceError = 0;
     for(var i = 0; i < newBoids.length; i++) {
+      var dx = flock.boids()[i][0] - newBoids[i][0];
+      var dy = flock.boids()[i][1] - newBoids[i][1];
+      totalDistanceError += Math.sqrt(dx * dx + dy * dy);
+
       flock.boids()[i] = deadReckoning.firstOrder(flock.boids()[i], newBoids[i]);
     }
+    console.log('Average position error:', totalDistanceError / newBoids.length);
   }
 };

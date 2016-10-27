@@ -1,8 +1,9 @@
 var viewport = require('./viewport');
-var flock = require('../shared/flock');
+var school = require('../shared/school');
 var messages = require('./messages');
-var flockSync = require('./flock-sync');
+var schoolSync = require('./school-sync');
 var animate = require('./animate');
+var interaction = require('./interaction');
 //var PIXI = require('pixi.js');
 
 var boundingRect = document.body.getBoundingClientRect();
@@ -13,10 +14,12 @@ var HEIGHT = boundingRect.height;
 //canvas.setAttribute('width', WIDTH);
 //canvas.setAttribute('height', HEIGHT);
 
-flock.init(WIDTH, HEIGHT);
+
+school.init();
 
 messages.init();
-flockSync.init();
-
-animate.load();
+schoolSync.init();
+animate.load(function() {
+  interaction.init();
+});
 //requestAnimationFrame(animate.update.bind(animate));

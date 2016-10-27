@@ -1,29 +1,22 @@
 var dt = 1 / 60;
 
 module.exports = {
-  zerothOrder: function(localBoid, actualBoid) {
-    localBoid[0] = actualBoid[0];
-    localBoid[1] = actualBoid[1];
-    localBoid[2] = actualBoid[2];
-    localBoid[3] = actualBoid[3];
-    localBoid[4] = actualBoid[4];
-    localBoid[5] = actualBoid[5];
-    return localBoid;
+  zerothOrder: function(fish, serializedServerFish) {
+    fish.x = serializedServerFish.x;
+    fish.y = serializedServerFish.y;
+    fish.vx = serializedServerFish.vx;
+    fish.vy = serializedServerFish.vy;
+    return fish;
   },
 
-  firstOrder: function(localBoid, actualBoid) {
-    var vx = (actualBoid[0] - localBoid[0]) / dt + actualBoid[0];
-    var vy = (actualBoid[1] - localBoid[1]) / dt + actualBoid[1];
-    localBoid[2] = vx;
-    localBoid[3] = vy;
-    return localBoid;
+  firstOrder: function(fish, serializedServerFish) {
+    fish.vx = (serializedServerFish.x - fish.x) / dt + serializedServerFish.vx;
+    fish.vy = (serializedServerFish.y - fish.y) / dt + serializedServerFish.vy;
+    return fish;
   },
 
-  secondOrder: function(localBoid, actualBoid) {
-    var ax = 2 / dt / dt * (actualBoid[0] - localBoid[0] + dt * (actualBoid[2] - localBoid[2]));
-    var ay = 2 / dt / dt * (actualBoid[1] - localBoid[1] + dt * (actualBoid[1] - localBoid[1]));
-    localBoid[4] = ax;
-    localBoid[5] = ay;
-    return localBoid;
+  secondOrder: function(fish, serializedServerFish) {
+    // TODO: Implement this?
+    return fish;
   },
 };

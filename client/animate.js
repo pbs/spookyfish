@@ -1,5 +1,5 @@
 var viewport = require('./viewport');
-var flock = require('../shared/flock');
+var school = require('../shared/school');
 
 var boundingRect;
 var WIDTH;
@@ -15,13 +15,16 @@ var fishImages = [
 ];
 
 module.exports = {
-  load: function (){
-    PIXI.loader.add(fishImages).load(this.init.bind(this));
+  load: function (callback){
+    PIXI.loader.add(fishImages).load(function() {
+      this.init();
+      callback && callback();
+    }.bind(this));
   },
   
   init: function() {
     // Setup the renderer
-    renderer = new PIXI.autoDetectRenderer(WIDTH, HEIGHT);
+    renderer = new PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.view);
 
     stage = new PIXI.Container();
@@ -43,29 +46,28 @@ module.exports = {
     var screenRight = screenLeft + window.innerWidth/2;
 
     viewport.setBoundaries(0, screenLeft, window.innerHeight, screenRight);
-    window.viewport = viewport;    
+    window.viewport = viewport;
 
     boundingRect = document.body.getBoundingClientRect();
     WIDTH = boundingRect.width;
     HEIGHT = boundingRect.height;
-    
-    flock.boids().forEach(function(boid, index){
+        
+    school.all().forEach(function(fish, index){
       var randomFish = fishImages[Math.floor(Math.random() * fishImages.length)];
       var randomScale = Math.floor(Math.random() * (5 - 2) - 2 ) / 5;
             
-      var fish = new PIXI.Sprite(
+      fish.sprite = new PIXI.Sprite(
         PIXI.loader.resources[randomFish].texture
       );
             
-      fish.x = boid[0];
-      fish.y = boid[1];
-      fish.anchor.set(0.5);
+      fish.sprite.x = fish.x;
+      fish.sprite.y = fish.y;
+      fish.sprite.anchor.set(0.5);
+      fish.randomScale = randomScale;
       
-      fish.scale.set(randomScale, randomScale);
-      
-      boid.push(randomScale, fish);
+      fish.sprite.scale.set(randomScale, randomScale);
             
-      stage.addChild(fish); 
+      stage.addChild(fish.sprite);
     });
     
     renderer.render(stage);
@@ -73,10 +75,9 @@ module.exports = {
   },
   
   update: function() {
+    school.tick();
     requestAnimationFrame(this.update.bind(this));
 
-    
-    flock.tick();
 
     this.draw();
     renderer.render(stage);
@@ -86,18 +87,15 @@ module.exports = {
     //ctx.clearRect(0, 0, WIDTH, WIDTH);
     //ctx.fillStyle = 'black';
 
-    flock
-      .boids()
-      .forEach(function(boid, index) {
-        var thisFish = boid[boid.length-1];
-        
-        //boid = [x, y, w, h, vx, vy ]
-        thisFish.x = boid[0];
-        thisFish.y = boid[1];
+    school
+      .all()
+      .forEach(function(fish, index) {
+        fish.sprite.x = fish.x;
+        fish.sprite.y = fish.y;
       
-        thisFish.rotation = Math.sin(boid[3]);
+        //thisFish.rotation = Math.sin(boid[3]);
         
-        thisFish.scale.x = Math.sign(boid[2]) * Math.abs(thisFish.scale.x);      
+        fish.sprite.scale.x = Math.sign(fish.vx) * Math.abs(fish.sprite.scale.x);      
       });
   },
 };

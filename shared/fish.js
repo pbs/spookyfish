@@ -101,6 +101,28 @@ Fish.prototype.checkCollision = function() {
   }
 };
 
+Fish.prototype.approachFeedPoints = function(feedPoints) {
+  var closestIndex = -1;
+  var closestDistance = Infinity;
+  for(var i = 0; i < feedPoints.length; i++) {
+    var distance = Math.abs(feedPoints.x - this.x);
+    if(distance < closestDistance) {
+      closestDistance = distance;
+      closestIndex = i;
+    }
+  }
+
+  if(closestIndex === -1) {
+    return;
+  }
+
+  var closestFeedPointX = feedPoints[closestIndex].x;
+  var approachAngle = Math.atan2(this.y, closestFeedPointX);
+  var velocity = 30;
+  this.vx = velocity * Math.cos(approachAngle);
+  this.vx = velocity * Math.sin(approachAngle);
+};
+
 Fish.prototype.serialize = function() {
   return {
     x: this.x,

@@ -18,6 +18,15 @@ module.exports = {
   tick: function() {
     school.forEach(function(fish) {
       fish.update();
+      fish.approachFeedPoints(feedPoints);
+    });
+
+    // Apply feed point aging
+    feedPoints.forEach(function(feedPoint) {
+      feedPoint.age--;
+    });
+    feedPoints = feedPoints.filter(function(feedPoint) {
+      return feedPoint.age != 0;
     });
   },
 

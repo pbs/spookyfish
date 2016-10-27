@@ -17,7 +17,7 @@ module.exports = {
   },
 
   secondOrder: function(localBoid, actualBoid) {
-    var ax = 2 / dt / dt * (actualBoid[0] - localBoid[0] + dt * (actualBoid[1] - localBoid[1]));
+    var ax = 2 / dt / dt * (actualBoid[0] - localBoid[0] + dt * (actualBoid[2] - localBoid[2]));
     var ay = 2 / dt / dt * (actualBoid[1] - localBoid[1] + dt * (actualBoid[1] - localBoid[1]));
 
     return [

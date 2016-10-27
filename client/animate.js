@@ -50,7 +50,7 @@ module.exports = {
     HEIGHT = boundingRect.height;
     
     flock.boids().forEach(function(boid, index){
-      var randomFish = Math.floor(Math.random() * (2 - 0));
+      var randomFish = images[Math.floor(Math.random() * images.length)];
       var randomScale = Math.floor(Math.random() * (5 - 2) - 2 ) / 5;
             
       var fish = new PIXI.Sprite(
@@ -59,13 +59,11 @@ module.exports = {
             
       fish.x = boid[0];
       fish.y = boid[1];
+      fish.anchor.set(0.5);
       
       fish.scale.set(randomScale, randomScale);
       
       boid.push(randomScale, fish);
-      
-//      boid[3] = randomScale;
-//      boid[4] = fish;
             
       stage.addChild(fish); 
     });
@@ -90,8 +88,6 @@ module.exports = {
 
     flock
       .boids()
- //     .filter(viewport.containsBoid)
- //     .map(viewport.toLocalCoords)
       .forEach(function(boid, index) {
         var thisFish = boid[boid.length-1];
         
@@ -99,7 +95,9 @@ module.exports = {
         thisFish.x = boid[0];
         thisFish.y = boid[1];
       
-        //ctx.fillRect(boid[0], boid[1], 4, 4);
+        thisFish.rotation = Math.sin(boid[3]);
+        
+        thisFish.scale.x = Math.sign(boid[2]) * Math.abs(thisFish.scale.x);      
       });
   },
 };

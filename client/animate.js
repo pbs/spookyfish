@@ -25,14 +25,14 @@ module.exports = {
   },
 
   draw: function() {
-    ctx.clearRect(0, 0, WIDTH, WIDTH);
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
     ctx.fillStyle = 'black';
     flock
       .boids()
       .filter(viewport.containsBoid)
       .map(viewport.toLocalCoords)
       .forEach(function(boid) {
-        ctx.fillRect(boid[0], boid[1], 2, 2);
+        ctx.fillRect(boid[0], boid[1], 4, 4);
       });
   },
 };

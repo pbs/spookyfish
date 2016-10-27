@@ -1,3 +1,8 @@
 node_modules
-public/bundle.js
+# public/bundle.js
 *.swp
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

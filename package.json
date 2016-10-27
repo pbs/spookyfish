@@ -7,7 +7,7 @@
   "scripts": {
     "bundle": "browserify client/index.js > public/bundle.js",
     "server": "node server/index.js",
-    "start": "npm run bundle && npm run server"
+    "start": "npm run server"
   },
   "devDependencies": {
     "browserify": "^13.1.1"

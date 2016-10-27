@@ -1,11 +1,12 @@
 var Fish = require('./fish');
 
 var school = null;
-var feedPoints = [];
+var feedPoints = null;
 
 module.exports = {
   init: function() {
     school = [];
+    feedPoints = [];
     for(var i = 0; i < 20; i++) {
       school.push(new Fish({
         restingSpeed: 10,
@@ -29,6 +30,7 @@ module.exports = {
   },
 
   addFeedPoint: function(x, age) {
+    feedPoints = feedPoints || [];
     feedPoints.push({
       x: x,
       age: age || 60 * 5
@@ -37,6 +39,10 @@ module.exports = {
 
   setFeedPoints: function(newFeedPoints) {
     feedPoints = newFeedPoints;
+  },
+
+  getFeedPoints: function() {
+    return feedPoints;
   },
 
   serialize: function() {

@@ -1,6 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var viewport = require('./viewport');
 var school = require('../shared/school');
+var Fish = require('../shared/fish');
 
 var boundingRect;
 var WIDTH;
@@ -22,7 +23,7 @@ module.exports = {
   
   init: function() {
     // Setup the renderer
-    renderer = new PIXI.autoDetectRenderer(WIDTH, HEIGHT);
+    renderer = new PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.view);
 
     stage = new PIXI.Container();
@@ -44,12 +45,12 @@ module.exports = {
     var screenRight = screenLeft + window.innerWidth/2;
 
     viewport.setBoundaries(0, screenLeft, window.innerHeight, screenRight);
-    window.viewport = viewport;    
+    window.viewport = viewport;
 
     boundingRect = document.body.getBoundingClientRect();
     WIDTH = boundingRect.width;
     HEIGHT = boundingRect.height;
-    
+        
     school.all().forEach(function(fish, index){
       var randomFish = fishImages[Math.floor(Math.random() * fishImages.length)];
       var randomScale = Math.floor(Math.random() * (5 - 2) - 2 ) / 5;
@@ -60,6 +61,8 @@ module.exports = {
             
       fish.sprite.x = fish.x;
       fish.sprite.y = fish.y;
+      fish.maxX = window.innerHeight;
+      fish.maxY = window.innerWidth;
       fish.sprite.anchor.set(0.5);
       fish.randomScale = randomScale;
       
@@ -98,7 +101,7 @@ module.exports = {
   },
 };
 
-},{"../shared/school":46,"./viewport":6}],2:[function(require,module,exports){
+},{"../shared/fish":45,"../shared/school":46,"./viewport":6}],2:[function(require,module,exports){
 var dt = 1 / 60;
 
 module.exports = {
@@ -138,6 +141,7 @@ var HEIGHT = boundingRect.height;
 //canvas.setAttribute('width', WIDTH);
 //canvas.setAttribute('height', HEIGHT);
 
+
 school.init();
 
 messages.init();
@@ -166,7 +170,7 @@ module.exports = {
   }
 };
 
-},{"faye":9}],5:[function(require,module,exports){
+},{"faye":10}],5:[function(require,module,exports){
 var viewport = require('./viewport');
 var deadReckoning = require('./dead-reckoning');
 var messages = require('./messages');
@@ -248,6 +252,188 @@ module.exports = {
 };
 
 },{}],7:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],8:[function(require,module,exports){
 "use strict";
 
 // rawAsap provides everything we need except exception management.
@@ -315,7 +501,7 @@ RawTask.prototype.call = function () {
     }
 };
 
-},{"./raw":8}],8:[function(require,module,exports){
+},{"./raw":9}],9:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -542,7 +728,7 @@ rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
 // https://github.com/tildeio/rsvp.js/blob/cddf7232546a9cf858524b75cde6f9edf72620a7/lib/rsvp/asap.js
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 var constants = require('./util/constants'),
@@ -559,7 +745,7 @@ Logging.wrapper = Faye;
 
 module.exports = Faye;
 
-},{"./mixins/logging":11,"./protocol/client":15,"./protocol/scheduler":21,"./util/constants":33}],10:[function(require,module,exports){
+},{"./mixins/logging":12,"./protocol/client":16,"./protocol/scheduler":22,"./util/constants":34}],11:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -611,7 +797,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/promise":38}],11:[function(require,module,exports){
+},{"../util/promise":39}],12:[function(require,module,exports){
 'use strict';
 
 var toJSON = require('../util/to_json');
@@ -660,7 +846,7 @@ for (var key in Logging.LOG_LEVELS)
 
 module.exports = Logging;
 
-},{"../util/to_json":40}],12:[function(require,module,exports){
+},{"../util/to_json":41}],13:[function(require,module,exports){
 'use strict';
 
 var extend       = require('../util/extend'),
@@ -699,7 +885,7 @@ Publisher.trigger = Publisher.emit;
 
 module.exports = Publisher;
 
-},{"../util/event_emitter":36,"../util/extend":37}],13:[function(require,module,exports){
+},{"../util/event_emitter":37,"../util/extend":38}],14:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -729,7 +915,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var Class     = require('../util/class'),
@@ -863,7 +1049,7 @@ extend(Channel, {
 
 module.exports = Channel;
 
-},{"../mixins/publisher":12,"../util/class":32,"../util/extend":37,"./grammar":19}],15:[function(require,module,exports){
+},{"../mixins/publisher":13,"../util/class":33,"../util/extend":38,"./grammar":20}],16:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1253,7 +1439,7 @@ extend(Client.prototype, Extensible);
 module.exports = Client;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../mixins/deferrable":10,"../mixins/logging":11,"../mixins/publisher":12,"../util/array":30,"../util/browser":31,"../util/class":32,"../util/constants":33,"../util/extend":37,"../util/promise":38,"../util/uri":41,"../util/validate_options":42,"./channel":14,"./dispatcher":16,"./error":17,"./extensible":18,"./publication":20,"./subscription":22,"asap":7}],16:[function(require,module,exports){
+},{"../mixins/deferrable":11,"../mixins/logging":12,"../mixins/publisher":13,"../util/array":31,"../util/browser":32,"../util/class":33,"../util/constants":34,"../util/extend":38,"../util/promise":39,"../util/uri":42,"../util/validate_options":43,"./channel":15,"./dispatcher":17,"./error":18,"./extensible":19,"./publication":21,"./subscription":23,"asap":8}],17:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1442,7 +1628,7 @@ extend(Dispatcher.prototype, Logging);
 module.exports = Dispatcher;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../mixins/logging":11,"../mixins/publisher":12,"../transport":23,"../util/class":32,"../util/cookies":34,"../util/extend":37,"../util/uri":41,"./scheduler":21}],17:[function(require,module,exports){
+},{"../mixins/logging":12,"../mixins/publisher":13,"../transport":24,"../util/class":33,"../util/cookies":35,"../util/extend":38,"../util/uri":42,"./scheduler":22}],18:[function(require,module,exports){
 'use strict';
 
 var Class   = require('../util/class'),
@@ -1499,7 +1685,7 @@ for (var name in errors)
 
 module.exports = Error;
 
-},{"../util/class":32,"./grammar":19}],18:[function(require,module,exports){
+},{"../util/class":33,"./grammar":20}],19:[function(require,module,exports){
 'use strict';
 
 var extend  = require('../util/extend'),
@@ -1548,7 +1734,7 @@ extend(Extensible, Logging);
 
 module.exports = Extensible;
 
-},{"../mixins/logging":11,"../util/extend":37}],19:[function(require,module,exports){
+},{"../mixins/logging":12,"../util/extend":38}],20:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -1558,7 +1744,7 @@ module.exports = {
   VERSION:          /^([0-9])+(\.(([a-z]|[A-Z])|[0-9])(((([a-z]|[A-Z])|[0-9])|\-|\_))*)*$/
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 var Class      = require('../util/class'),
@@ -1566,7 +1752,7 @@ var Class      = require('../util/class'),
 
 module.exports = Class(Deferrable);
 
-},{"../mixins/deferrable":10,"../util/class":32}],21:[function(require,module,exports){
+},{"../mixins/deferrable":11,"../util/class":33}],22:[function(require,module,exports){
 'use strict';
 
 var extend = require('../util/extend');
@@ -1614,7 +1800,7 @@ extend(Scheduler.prototype, {
 
 module.exports = Scheduler;
 
-},{"../util/extend":37}],22:[function(require,module,exports){
+},{"../util/extend":38}],23:[function(require,module,exports){
 'use strict';
 
 var Class      = require('../util/class'),
@@ -1660,7 +1846,7 @@ extend(Subscription.prototype, Deferrable);
 
 module.exports = Subscription;
 
-},{"../mixins/deferrable":10,"../util/class":32,"../util/extend":37}],23:[function(require,module,exports){
+},{"../mixins/deferrable":11,"../util/class":33,"../util/extend":38}],24:[function(require,module,exports){
 'use strict';
 
 var Transport = require('./transport');
@@ -1673,7 +1859,7 @@ Transport.register('callback-polling', require('./jsonp'));
 
 module.exports = Transport;
 
-},{"./cors":24,"./event_source":25,"./jsonp":26,"./transport":27,"./web_socket":28,"./xhr":29}],24:[function(require,module,exports){
+},{"./cors":25,"./event_source":26,"./jsonp":27,"./transport":28,"./web_socket":29,"./xhr":30}],25:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1761,7 +1947,7 @@ var CORS = extend(Class(Transport, {
 module.exports = CORS;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/class":32,"../util/extend":37,"../util/set":39,"../util/to_json":40,"../util/uri":41,"./transport":27}],25:[function(require,module,exports){
+},{"../util/class":33,"../util/extend":38,"../util/set":40,"../util/to_json":41,"../util/uri":42,"./transport":28}],26:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1862,7 +2048,7 @@ extend(EventSource.prototype, Deferrable);
 module.exports = EventSource;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../mixins/deferrable":10,"../util/class":32,"../util/copy_object":35,"../util/extend":37,"../util/uri":41,"./transport":27,"./xhr":29}],26:[function(require,module,exports){
+},{"../mixins/deferrable":11,"../util/class":33,"../util/copy_object":36,"../util/extend":38,"../util/uri":42,"./transport":28,"./xhr":30}],27:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1930,7 +2116,7 @@ var JSONP = extend(Class(Transport, {
 module.exports = JSONP;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/class":32,"../util/copy_object":35,"../util/extend":37,"../util/to_json":40,"../util/uri":41,"./transport":27}],27:[function(require,module,exports){
+},{"../util/class":33,"../util/copy_object":36,"../util/extend":38,"../util/to_json":41,"../util/uri":42,"./transport":28}],28:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -2145,7 +2331,7 @@ extend(Transport.prototype, Timeouts);
 module.exports = Transport;
 
 }).call(this,require('_process'))
-},{"../mixins/logging":11,"../mixins/timeouts":13,"../protocol/channel":14,"../util/array":30,"../util/class":32,"../util/cookies":34,"../util/extend":37,"../util/promise":38,"../util/uri":41,"_process":44}],28:[function(require,module,exports){
+},{"../mixins/logging":12,"../mixins/timeouts":14,"../protocol/channel":15,"../util/array":31,"../util/class":33,"../util/cookies":35,"../util/extend":38,"../util/promise":39,"../util/uri":42,"_process":7}],29:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2310,7 +2496,7 @@ if (browser.Event && global.onbeforeunload !== undefined)
 module.exports = WebSocket;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../mixins/deferrable":10,"../util/browser":31,"../util/class":32,"../util/copy_object":35,"../util/extend":37,"../util/promise":38,"../util/set":39,"../util/to_json":40,"../util/uri":41,"../util/websocket":43,"./transport":27}],29:[function(require,module,exports){
+},{"../mixins/deferrable":11,"../util/browser":32,"../util/class":33,"../util/copy_object":36,"../util/extend":38,"../util/promise":39,"../util/set":40,"../util/to_json":41,"../util/uri":42,"../util/websocket":44,"./transport":28}],30:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2396,7 +2582,7 @@ var XHR = extend(Class(Transport, {
 module.exports = XHR;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/browser":31,"../util/class":32,"../util/extend":37,"../util/to_json":40,"../util/uri":41,"./transport":27}],30:[function(require,module,exports){
+},{"../util/browser":32,"../util/class":33,"../util/extend":38,"../util/to_json":41,"../util/uri":42,"./transport":28}],31:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -2472,7 +2658,7 @@ module.exports = {
   }
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2526,7 +2712,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 var extend = require('./extend');
@@ -2551,7 +2737,7 @@ module.exports = function(parent, methods) {
   return klass;
 };
 
-},{"./extend":37}],33:[function(require,module,exports){
+},{"./extend":38}],34:[function(require,module,exports){
 module.exports = {
   VERSION:          '1.2.3',
 
@@ -2563,12 +2749,12 @@ module.exports = {
   MANDATORY_CONNECTION_TYPES: ['long-polling', 'callback-polling', 'in-process']
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 module.exports = {};
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 var copyObject = function(object) {
@@ -2589,7 +2775,7 @@ var copyObject = function(object) {
 
 module.exports = copyObject;
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /*
 Copyright Joyent, Inc. and other Node contributors. All rights reserved.
 Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -2762,7 +2948,7 @@ EventEmitter.prototype.listeners = function(type) {
   return this._events[type];
 };
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 module.exports = function(dest, source, overwrite) {
@@ -2776,7 +2962,7 @@ module.exports = function(dest, source, overwrite) {
   return dest;
 };
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 var asap = require('asap');
@@ -2939,7 +3125,7 @@ Promise.deferred = Promise.pending = function() {
 
 module.exports = Promise;
 
-},{"asap":7}],39:[function(require,module,exports){
+},{"asap":8}],40:[function(require,module,exports){
 'use strict';
 
 var Class = require('./class');
@@ -2991,7 +3177,7 @@ module.exports = Class({
   }
 });
 
-},{"./class":32}],40:[function(require,module,exports){
+},{"./class":33}],41:[function(require,module,exports){
 'use strict';
 
 // http://assanka.net/content/tech/2009/09/02/json2-js-vs-prototype/
@@ -3002,7 +3188,7 @@ module.exports = function(object) {
   });
 };
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -3087,7 +3273,7 @@ module.exports = {
   }
 };
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 
 var array = require('./array');
@@ -3099,7 +3285,7 @@ module.exports = function(options, validKeys) {
   }
 };
 
-},{"./array":30}],43:[function(require,module,exports){
+},{"./array":31}],44:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -3113,188 +3299,6 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],44:[function(require,module,exports){
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
 },{}],45:[function(require,module,exports){
 var SCHOOL_MIN_X = 0;
 var SCHOOL_MAX_X = 500;
@@ -3313,8 +3317,14 @@ var Fish = function(options) {
   this.options = options;
 
   this.id = Math.floor(Math.random() * 100000);
-  this.x = rand(SCHOOL_MIN_X, SCHOOL_MAX_X);
-  this.y = rand(SCHOOL_MIN_Y, SCHOOL_MAX_Y);
+  
+  this.minX = this.options.minX; 
+  this.minY = this.options.minY;
+  this.maxX = this.options.maxX;
+  this.maxY = this.options.maxY;
+  
+  this.x = rand(this.minX, this.maxX);
+  this.y = rand(this.minY, this.maxY);
   this.vx = this.options.restingSpeed * rand(0.9, 1.1);
   if(maybe(0.5)) {
     this.vx *= -1;
@@ -3382,19 +3392,19 @@ Fish.prototype.doTurn = function() {
 
 Fish.prototype.checkCollision = function() {
   // Wall collision
-  if(this.x < SCHOOL_MIN_X) {
-    this.x = SCHOOL_MIN_X;
+  if(this.x < this.minX) {
+    this.x = this.minX;
     this.vx = Math.abs(this.vx);
-  } else if(this.x > SCHOOL_MAX_X) {
-    this.x = SCHOOL_MAX_X;
+  } else if(this.x > this.maxX) {
+    this.x = this.maxX;
     this.vx = -Math.abs(this.vx);
   }
   
-  if(this.y < SCHOOL_MIN_Y) {
-    this.y = SCHOOL_MIN_Y;
+  if(this.y < this.minY) {
+    this.y = this.minY;
     this.vy = Math.abs(this.vy);
-  } else if(this.y > SCHOOL_MAX_Y) {
-    this.y = SCHOOL_MAX_Y;
+  } else if(this.y > this.maxY) {
+    this.y = this.maxY;
     this.vy = -Math.abs(this.vy);
   }
 };
@@ -3422,7 +3432,11 @@ module.exports = {
     for(var i = 0; i < 20; i++) {
       school.push(new Fish({
         restingSpeed: 10,
-        startledSpeed: 50
+        startledSpeed: 50,
+        minX: 0,
+        minY: 0,
+        maxX: 1000,
+        maxY: 1000
       }));
     }
   },

@@ -7,7 +7,7 @@ module.exports = {
     school = [];
     for(var i = 0; i < 20; i++) {
       school.push(new Fish({
-        restingSpeed: 2.5,
+        restingSpeed: 10,
         startledSpeed: 50
       }));
     }

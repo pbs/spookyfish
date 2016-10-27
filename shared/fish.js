@@ -14,7 +14,7 @@ var Fish = function(options) {
   this.x = rand(SCHOOL_MIN_X, SCHOOL_MAX_X);
   this.y = rand(SCHOOL_MIN_Y, SCHOOL_MAX_Y);
   this.vx = this.options.restingSpeed;
-  this.vy = (Math.random() * 0.5) - 1;
+  this.vy = rand(-0.5, 0.5);
   this.startled = 0;
 };
 
@@ -36,7 +36,7 @@ Fish.prototype.update = function() {
   this.vy = speed * Math.sin(theta);
  */
   if(Math.random() < 0.1) {
-    this.vy = (Math.random() * 0.5) - 1;
+    this.vy = rand(-0.5, 0.5);
   }
 
   // Wall collision

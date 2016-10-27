@@ -34,7 +34,10 @@ module.exports = {
 //    var elementHeight = Number(element.getAttribute('height'));    
     var elementWidth = window.innerWidth;
     var elementHeight = window.innerHeight;
-    
-    return [ (boid[0] - left) / viewportWidth * elementWidth, (boid[1] - top) / viewportHeight * elementHeight ];
+    var x = (boid[0] - left) / viewportWidth * elementWidth;
+    var y = (boid[1] - top) / viewportHeight * elementHeight;
+    boid[0] = x;
+    boid[1] = y;
+    return boid;
   }
 };

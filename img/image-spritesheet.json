@@ -1,0 +1,57 @@
+{"frames": {
+
+"bubble.png":
+{
+	"frame": {"x":2,"y":25,"w":47,"h":47},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":47,"h":47},
+	"sourceSize": {"w":47,"h":47},
+	"pivot": {"x":0.5,"y":0.5}
+},
+"fish_base.png":
+{
+	"frame": {"x":2,"y":79,"w":915,"h":120},
+	"rotated": true,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":915,"h":120},
+	"sourceSize": {"w":915,"h":120},
+	"pivot": {"x":0.5,"y":0.5}
+},
+"halloween_fish1.png":
+{
+	"frame": {"x":48,"y":2,"w":67,"h":21},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":67,"h":21},
+	"sourceSize": {"w":67,"h":21},
+	"pivot": {"x":0.5,"y":0.5}
+},
+"halloween_fish2.png":
+{
+	"frame": {"x":51,"y":25,"w":69,"h":52},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":69,"h":52},
+	"sourceSize": {"w":69,"h":52},
+	"pivot": {"x":0.5,"y":0.5}
+},
+"halloween_fish3.png":
+{
+	"frame": {"x":2,"y":2,"w":44,"h":16},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":44,"h":16},
+	"sourceSize": {"w":44,"h":16},
+	"pivot": {"x":0.5,"y":0.5}
+}},
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "/Users/inye/Development/Jams/spookyfish/img/image-spritesheet.png/image-spritesheet.png",
+	"format": "RGBA8888",
+	"size": {"w":124,"h":996},
+	"scale": "0.5",
+	"smartupdate": "$TexturePacker:SmartUpdate:d3f1e3710509666ef21b11ba2ebe9643:9dc35c72407522e741136fbfa14064b4:b6d6cb33ba5a66a78317b4d6fc13065c$"
+}
+}

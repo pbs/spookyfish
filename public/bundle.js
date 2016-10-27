@@ -1,152 +1,151 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var viewport = require('./viewport');
-var flock = require('../shared/flock');
+var school = require('../shared/school');
 
 var boundingRect;
 var WIDTH;
 var HEIGHT;
 var ctx;
+var renderer;
+var stage;
+
+var fishImages = [
+  "src-img/halloween_fish1.png",
+  "src-img/halloween_fish2.png", 
+  "src-img/halloween_fish3.png"
+];
 
 module.exports = {
+  load: function (){
+    PIXI.loader.add(fishImages).load(this.init.bind(this));
+  },
+  
   init: function() {
-    var canvas = document.querySelector('canvas');
-    ctx = canvas.getContext('2d');
+    // Setup the renderer
+    renderer = new PIXI.autoDetectRenderer(WIDTH, HEIGHT);
+    document.body.appendChild(renderer.view);
+
+    stage = new PIXI.Container();
+    
+    renderer.view.style.position = "absolute";
+    
+    renderer.view.style.display = "block";
+    renderer.autoResize = true;
+    renderer.resize(window.innerWidth, window.innerHeight);
+    
+    viewport.setElement(renderer.view);
+    
+    // things
+    var screenPosition = Number(location.hash.substring(1))
+    if(isNaN(screenPosition)) {
+      screenPosition = 0;
+    }
+    var screenLeft = screenPosition * window.innerWidth/2;
+    var screenRight = screenLeft + window.innerWidth/2;
+
+    viewport.setBoundaries(0, screenLeft, window.innerHeight, screenRight);
+    window.viewport = viewport;    
 
     boundingRect = document.body.getBoundingClientRect();
     WIDTH = boundingRect.width;
     HEIGHT = boundingRect.height;
+    
+    school.all().forEach(function(fish, index){
+      var randomFish = fishImages[Math.floor(Math.random() * fishImages.length)];
+      var randomScale = Math.floor(Math.random() * (5 - 2) - 2 ) / 5;
+            
+      fish.sprite = new PIXI.Sprite(
+        PIXI.loader.resources[randomFish].texture
+      );
+            
+      fish.sprite.x = fish.x;
+      fish.sprite.y = fish.y;
+      fish.sprite.anchor.set(0.5);
+      fish.randomScale = randomScale;
+      
+      fish.sprite.scale.set(randomScale, randomScale);
+            
+      stage.addChild(fish.sprite);
+    });
+    
+    renderer.render(stage);
+    requestAnimationFrame(this.update.bind(this));
   },
-
+  
   update: function() {
-    flock.tick();
+    school.tick();
+    requestAnimationFrame(this.update.bind(this));
+
 
     this.draw();
-
-    requestAnimationFrame(this.update.bind(this));
+    renderer.render(stage);
   },
 
   draw: function() {
-    ctx.clearRect(0, 0, WIDTH, HEIGHT);
-    ctx.fillStyle = 'black';
-    flock
-      .boids()
-      .filter(viewport.containsBoid)
-      .map(viewport.toLocalCoords)
-      .forEach(function(boid) {
-        ctx.fillRect(boid[0], boid[1], 4, 4);
+    //ctx.clearRect(0, 0, WIDTH, WIDTH);
+    //ctx.fillStyle = 'black';
+
+    school
+      .all()
+      .forEach(function(fish, index) {
+        fish.sprite.x = fish.x;
+        fish.sprite.y = fish.y;
+      
+        //thisFish.rotation = Math.sin(boid[3]);
+        
+        fish.sprite.scale.x = Math.sign(fish.vx) * Math.abs(fish.sprite.scale.x);      
       });
   },
 };
 
-},{"../shared/flock":48,"./viewport":6}],2:[function(require,module,exports){
+},{"../shared/school":46,"./viewport":6}],2:[function(require,module,exports){
 var dt = 1 / 60;
 
 module.exports = {
-  zerothOrder: function(localBoid, actualBoid) {
-    return actualBoid;
+  zerothOrder: function(fish, serializedServerFish) {
+    fish.x = serializedServerFish.x;
+    fish.y = serializedServerFish.y;
+    fish.vx = serializedServerFish.vx;
+    fish.vy = serializedServerFish.vy;
+    return fish;
   },
 
-  firstOrder: function(localBoid, actualBoid) {
-    return [
-      localBoid[0],
-      localBoid[1],
-      (actualBoid[0] - localBoid[0]) / dt + actualBoid[0],
-      (actualBoid[1] - localBoid[1]) / dt + actualBoid[1],
-      actualBoid[4],
-      actualBoid[5],
-    ];
+  firstOrder: function(fish, serializedServerFish) {
+    fish.vx = (serializedServerFish.x - fish.x) / dt + serializedServerFish.vx;
+    fish.vy = (serializedServerFish.y - fish.y) / dt + serializedServerFish.vy;
+    return fish;
   },
 
-  secondOrder: function(localBoid, actualBoid) {
-    var ax = 2 / dt / dt * (actualBoid[0] - localBoid[0] + dt * (actualBoid[1] - localBoid[1]));
-    var ay = 2 / dt / dt * (actualBoid[1] - localBoid[1] + dt * (actualBoid[1] - localBoid[1]));
-
-    return [
-      localBoid[0],
-      localBoid[1],
-      localBoid[2],
-      localBoid[3],
-      ax,
-      ay
-    ];
+  secondOrder: function(fish, serializedServerFish) {
+    // TODO: Implement this?
+    return fish;
   },
 };
 
 },{}],3:[function(require,module,exports){
 var viewport = require('./viewport');
-var deadReckoning = require('./dead-reckoning');
+var school = require('../shared/school');
 var messages = require('./messages');
-var flock = require('../shared/flock');
-
-var neverSynced = true;
-
-module.exports = {
-  init: function() {
-    messages.subscribe(function(data) {
-      if(data.type !== 'position') {
-        return;
-      }
-
-      this.receiveVisibleFlockUpdate(data.boids);
-    }.bind(this));
-  },
-
-  receiveVisibleFlockUpdate: function(newBoids) {
-    var totalDistanceError = 0;
-    for(var i = 0; i < newBoids.length; i++) {
-      var dx = flock.boids()[i][0] - newBoids[i][0];
-      var dy = flock.boids()[i][1] - newBoids[i][1];
-      var distanceError = Math.sqrt(dx * dx + dy * dy);
-      totalDistanceError += distanceError;
-
-      if(neverSynced || distanceError > 50) {
-        flock.boids()[i] = deadReckoning.zerothOrder(flock.boids()[i], newBoids[i]);
-      } else {
-        flock.boids()[i] = deadReckoning.secondOrder(flock.boids()[i], newBoids[i]);
-      }
-    }
-
-    neverSynced = false;
-
-    console.log('Average position error:', totalDistanceError / newBoids.length);
-  }
-};
-
-},{"../shared/flock":48,"./dead-reckoning":2,"./messages":5,"./viewport":6}],4:[function(require,module,exports){
-var viewport = require('./viewport');
-var flock = require('../shared/flock');
-var messages = require('./messages');
-var flockSync = require('./flock-sync');
+var schoolSync = require('./school-sync');
 var animate = require('./animate');
+//var PIXI = require('pixi.js');
 
 var boundingRect = document.body.getBoundingClientRect();
 var WIDTH = boundingRect.width;
 var HEIGHT = boundingRect.height;
 
-var canvas = document.querySelector('canvas');
-canvas.setAttribute('width', WIDTH);
-canvas.setAttribute('height', HEIGHT);
+//var canvas = document.querySelector('canvas');
+//canvas.setAttribute('width', WIDTH);
+//canvas.setAttribute('height', HEIGHT);
 
-var screenPosition = Number(location.hash.substring(1))
-if(isNaN(screenPosition)) {
-  screenPosition = 0;
-}
-var screenLeft = screenPosition * 250;
-var screenRight = screenLeft + 250;
-
-viewport.setElement(canvas);
-viewport.setBoundaries(0, screenLeft, HEIGHT, screenRight);
-window.viewport = viewport;
-
-flock.init(WIDTH, HEIGHT);
+school.init();
 
 messages.init();
-flockSync.init();
+schoolSync.init();
 
-animate.init();
-requestAnimationFrame(animate.update.bind(animate));
-
-},{"../shared/flock":48,"./animate":1,"./flock-sync":3,"./messages":5,"./viewport":6}],5:[function(require,module,exports){
+animate.load();
+//requestAnimationFrame(animate.update.bind(animate));
+},{"../shared/school":46,"./animate":1,"./messages":4,"./school-sync":5,"./viewport":6}],4:[function(require,module,exports){
 var faye = require('faye');
 
 var client;
@@ -167,13 +166,50 @@ module.exports = {
   }
 };
 
-},{"faye":11}],6:[function(require,module,exports){
+},{"faye":9}],5:[function(require,module,exports){
+var viewport = require('./viewport');
+var deadReckoning = require('./dead-reckoning');
+var messages = require('./messages');
+var school = require('../shared/school');
+
+var neverSynced = true;
+
+module.exports = {
+  init: function() {
+    messages.subscribe(function(data) {
+      if(data.type !== 'position') {
+        return;
+      }
+
+      this.receiveVisibleSchoolUpdate(data.school);
+    }.bind(this));
+  },
+
+  receiveVisibleSchoolUpdate: function(newFish) {
+    var totalDistanceError = 0;
+    for(var i = 0; i < newFish.length; i++) {
+      // copy hidden fields
+      school.get(i).startled = newFish[i].startled;
+
+      if(neverSynced) {
+        deadReckoning.zerothOrder(school.get(i), newFish[i]);
+      } else {
+        //deadReckoning.firstOrder(school.get(i), newFish[i]);
+      }
+    }
+
+    neverSynced = false;
+  }
+};
+
+},{"../shared/school":46,"./dead-reckoning":2,"./messages":4,"./viewport":6}],6:[function(require,module,exports){
 var element = null;
 
 var top = 0;
 var left = 0;
-var bottom = 500;
-var right = 500;
+var bottom = window.innerWidth;
+var right = window.innerHeight;
+
 var viewportWidth = -1;
 var viewportHeight = -1;
 
@@ -199,10 +235,15 @@ module.exports = {
   },
 
   toLocalCoords: function(boid) {
-    var elementWidth = Number(element.getAttribute('width'));
-    var elementHeight = Number(element.getAttribute('height'));
-
-    return [ (boid[0] - left) / viewportWidth * elementWidth, (boid[1] - top) / viewportHeight * elementHeight ];
+//    var elementWidth = Number(element.getAttribute('width'));
+//    var elementHeight = Number(element.getAttribute('height'));    
+    var elementWidth = window.innerWidth;
+    var elementHeight = window.innerHeight;
+    var x = (boid[0] - left) / viewportWidth * elementWidth;
+    var y = (boid[1] - top) / viewportHeight * elementHeight;
+    boid[0] = x;
+    boid[1] = y;
+    return boid;
   }
 };
 
@@ -502,482 +543,6 @@ rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],9:[function(require,module,exports){
-var EventEmitter = require('events').EventEmitter
-  , inherits = require('inherits')
-  , POSITIONX = 0
-  , POSITIONY = 1
-  , SPEEDX = 2
-  , SPEEDY = 3
-  , ACCELERATIONX = 4
-  , ACCELERATIONY = 5
-
-module.exports = Boids
-
-function Boids(opts, callback) {
-  if (!(this instanceof Boids)) return new Boids(opts, callback)
-  EventEmitter.call(this)
-
-  opts = opts || {}
-  callback = callback || function(){}
-
-  this.speedLimitRoot = opts.speedLimit || 0
-  this.accelerationLimitRoot = opts.accelerationLimit || 1
-  this.speedLimit = Math.pow(this.speedLimitRoot, 2)
-  this.accelerationLimit = Math.pow(this.accelerationLimitRoot, 2)
-  this.separationDistance = Math.pow(opts.separationDistance || 60, 2)
-  this.alignmentDistance = Math.pow(opts.alignmentDistance || 180, 2)
-  this.cohesionDistance = Math.pow(opts.cohesionDistance || 180, 2)
-  this.separationForce = opts.separationForce || 0.15
-  this.cohesionForce = opts.cohesionForce || 0.1
-  this.alignmentForce = opts.alignmentForce || opts.alignment || 0.25
-  this.attractors = opts.attractors || []
-
-  var boids = this.boids = []
-  for (var i = 0, l = opts.boids === undefined ? 50 : opts.boids; i < l; i += 1) {
-    boids[i] = [
-        Math.random()*25, Math.random()*25 // position
-      , 0, 0                               // speed
-      , 0, 0                               // acceleration
-    ]
-  }
-
-  this.on('tick', function() {
-    callback(boids)
-  })
-}
-inherits(Boids, EventEmitter)
-
-Boids.prototype.tick = function() {
-  var boids = this.boids
-    , sepDist = this.separationDistance
-    , sepForce = this.separationForce
-    , cohDist = this.cohesionDistance
-    , cohForce = this.cohesionForce
-    , aliDist = this.alignmentDistance
-    , aliForce = this.alignmentForce
-    , speedLimit = this.speedLimit
-    , accelerationLimit = this.accelerationLimit
-    , accelerationLimitRoot = this.accelerationLimitRoot
-    , speedLimitRoot = this.speedLimitRoot
-    , size = boids.length
-    , current = size
-    , sforceX, sforceY
-    , cforceX, cforceY
-    , aforceX, aforceY
-    , spareX, spareY
-    , attractors = this.attractors
-    , attractorCount = attractors.length
-    , attractor
-    , distSquared
-    , currPos
-    , length
-    , target
-    , ratio
-
-  while (current--) {
-    sforceX = 0; sforceY = 0
-    cforceX = 0; cforceY = 0
-    aforceX = 0; aforceY = 0
-    currPos = boids[current]
-
-    // Attractors
-    target = attractorCount
-    while (target--) {
-      attractor = attractors[target]
-      spareX = currPos[0] - attractor[0]
-      spareY = currPos[1] - attractor[1]
-      distSquared = spareX*spareX + spareY*spareY
-
-      if (distSquared < attractor[2]*attractor[2]) {
-        length = hypot(spareX, spareY)
-        boids[current][SPEEDX] -= (attractor[3] * spareX / length) || 0
-        boids[current][SPEEDY] -= (attractor[3] * spareY / length) || 0
-      }
-    }
-
-    target = size
-    while (target--) {
-      if (target === current) continue
-      spareX = currPos[0] - boids[target][0]
-      spareY = currPos[1] - boids[target][1]
-      distSquared = spareX*spareX + spareY*spareY
-
-      if (distSquared < sepDist) {
-        sforceX += spareX
-        sforceY += spareY
-      } else {
-        if (distSquared < cohDist) {
-          cforceX += spareX
-          cforceY += spareY
-        }
-        if (distSquared < aliDist) {
-          aforceX += boids[target][SPEEDX]
-          aforceY += boids[target][SPEEDY]
-        }
-      }
-    }
-
-    // Separation
-    length = hypot(sforceX, sforceY)
-    boids[current][ACCELERATIONX] += (sepForce * sforceX / length) || 0
-    boids[current][ACCELERATIONY] += (sepForce * sforceY / length) || 0
-    // Cohesion
-    length = hypot(cforceX, cforceY)
-    boids[current][ACCELERATIONX] -= (cohForce * cforceX / length) || 0
-    boids[current][ACCELERATIONY] -= (cohForce * cforceY / length) || 0
-    // Alignment
-    length = hypot(aforceX, aforceY)
-    boids[current][ACCELERATIONX] -= (aliForce * aforceX / length) || 0
-    boids[current][ACCELERATIONY] -= (aliForce * aforceY / length) || 0
-  }
-  current = size
-
-  // Apply speed/acceleration for
-  // this tick
-  while (current--) {
-    if (accelerationLimit) {
-      distSquared = boids[current][ACCELERATIONX]*boids[current][ACCELERATIONX] + boids[current][ACCELERATIONY]*boids[current][ACCELERATIONY]
-      if (distSquared > accelerationLimit) {
-        ratio = accelerationLimitRoot / hypot(boids[current][ACCELERATIONX], boids[current][ACCELERATIONY])
-        boids[current][ACCELERATIONX] *= ratio
-        boids[current][ACCELERATIONY] *= ratio
-      }
-    }
-
-    boids[current][SPEEDX] += boids[current][ACCELERATIONX]
-    boids[current][SPEEDY] += boids[current][ACCELERATIONY]
-
-    if (speedLimit) {
-      distSquared = boids[current][SPEEDX]*boids[current][SPEEDX] + boids[current][SPEEDY]*boids[current][SPEEDY]
-      if (distSquared > speedLimit) {
-        ratio = speedLimitRoot / hypot(boids[current][SPEEDX], boids[current][SPEEDY])
-        boids[current][SPEEDX] *= ratio
-        boids[current][SPEEDY] *= ratio
-      }
-    }
-
-    boids[current][POSITIONX] += boids[current][SPEEDX]
-    boids[current][POSITIONY] += boids[current][SPEEDY]
-  }
-
-  this.emit('tick', boids)
-}
-
-// double-dog-leg hypothenuse approximation
-// http://forums.parallax.com/discussion/147522/dog-leg-hypotenuse-approximation
-function hypot(a, b) {
-  a = Math.abs(a)
-  b = Math.abs(b)
-  var lo = Math.min(a, b)
-  var hi = Math.max(a, b)
-  return hi + 3 * lo / 32 + Math.max(0, 2 * lo - hi) / 8 + Math.max(0, 4 * lo - hi) / 16
-}
-
-},{"events":10,"inherits":46}],10:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-function EventEmitter() {
-  this._events = this._events || {};
-  this._maxListeners = this._maxListeners || undefined;
-}
-module.exports = EventEmitter;
-
-// Backwards-compat with node 0.10.x
-EventEmitter.EventEmitter = EventEmitter;
-
-EventEmitter.prototype._events = undefined;
-EventEmitter.prototype._maxListeners = undefined;
-
-// By default EventEmitters will print a warning if more than 10 listeners are
-// added to it. This is a useful default which helps finding memory leaks.
-EventEmitter.defaultMaxListeners = 10;
-
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!isNumber(n) || n < 0 || isNaN(n))
-    throw TypeError('n must be a positive number');
-  this._maxListeners = n;
-  return this;
-};
-
-EventEmitter.prototype.emit = function(type) {
-  var er, handler, len, args, i, listeners;
-
-  if (!this._events)
-    this._events = {};
-
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events.error ||
-        (isObject(this._events.error) && !this._events.error.length)) {
-      er = arguments[1];
-      if (er instanceof Error) {
-        throw er; // Unhandled 'error' event
-      } else {
-        // At least give some kind of context to the user
-        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
-        err.context = er;
-        throw err;
-      }
-    }
-  }
-
-  handler = this._events[type];
-
-  if (isUndefined(handler))
-    return false;
-
-  if (isFunction(handler)) {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
-    }
-  } else if (isObject(handler)) {
-    args = Array.prototype.slice.call(arguments, 1);
-    listeners = handler.slice();
-    len = listeners.length;
-    for (i = 0; i < len; i++)
-      listeners[i].apply(this, args);
-  }
-
-  return true;
-};
-
-EventEmitter.prototype.addListener = function(type, listener) {
-  var m;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events)
-    this._events = {};
-
-  // To avoid recursion in the case that type === "newListener"! Before
-  // adding it to the listeners, first emit "newListener".
-  if (this._events.newListener)
-    this.emit('newListener', type,
-              isFunction(listener.listener) ?
-              listener.listener : listener);
-
-  if (!this._events[type])
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  else if (isObject(this._events[type]))
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  else
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-
-  // Check for listener leak
-  if (isObject(this._events[type]) && !this._events[type].warned) {
-    if (!isUndefined(this._maxListeners)) {
-      m = this._maxListeners;
-    } else {
-      m = EventEmitter.defaultMaxListeners;
-    }
-
-    if (m && m > 0 && this._events[type].length > m) {
-      this._events[type].warned = true;
-      console.error('(node) warning: possible EventEmitter memory ' +
-                    'leak detected. %d listeners added. ' +
-                    'Use emitter.setMaxListeners() to increase limit.',
-                    this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
-    }
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  var fired = false;
-
-  function g() {
-    this.removeListener(type, g);
-
-    if (!fired) {
-      fired = true;
-      listener.apply(this, arguments);
-    }
-  }
-
-  g.listener = listener;
-  this.on(type, g);
-
-  return this;
-};
-
-// emits a 'removeListener' event iff the listener was removed
-EventEmitter.prototype.removeListener = function(type, listener) {
-  var list, position, length, i;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events || !this._events[type])
-    return this;
-
-  list = this._events[type];
-  length = list.length;
-  position = -1;
-
-  if (list === listener ||
-      (isFunction(list.listener) && list.listener === listener)) {
-    delete this._events[type];
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-
-  } else if (isObject(list)) {
-    for (i = length; i-- > 0;) {
-      if (list[i] === listener ||
-          (list[i].listener && list[i].listener === listener)) {
-        position = i;
-        break;
-      }
-    }
-
-    if (position < 0)
-      return this;
-
-    if (list.length === 1) {
-      list.length = 0;
-      delete this._events[type];
-    } else {
-      list.splice(position, 1);
-    }
-
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  var key, listeners;
-
-  if (!this._events)
-    return this;
-
-  // not listening for removeListener, no need to emit
-  if (!this._events.removeListener) {
-    if (arguments.length === 0)
-      this._events = {};
-    else if (this._events[type])
-      delete this._events[type];
-    return this;
-  }
-
-  // emit removeListener for all listeners on all events
-  if (arguments.length === 0) {
-    for (key in this._events) {
-      if (key === 'removeListener') continue;
-      this.removeAllListeners(key);
-    }
-    this.removeAllListeners('removeListener');
-    this._events = {};
-    return this;
-  }
-
-  listeners = this._events[type];
-
-  if (isFunction(listeners)) {
-    this.removeListener(type, listeners);
-  } else if (listeners) {
-    // LIFO order
-    while (listeners.length)
-      this.removeListener(type, listeners[listeners.length - 1]);
-  }
-  delete this._events[type];
-
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  var ret;
-  if (!this._events || !this._events[type])
-    ret = [];
-  else if (isFunction(this._events[type]))
-    ret = [this._events[type]];
-  else
-    ret = this._events[type].slice();
-  return ret;
-};
-
-EventEmitter.prototype.listenerCount = function(type) {
-  if (this._events) {
-    var evlistener = this._events[type];
-
-    if (isFunction(evlistener))
-      return 1;
-    else if (evlistener)
-      return evlistener.length;
-  }
-  return 0;
-};
-
-EventEmitter.listenerCount = function(emitter, type) {
-  return emitter.listenerCount(type);
-};
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-
-},{}],11:[function(require,module,exports){
 'use strict';
 
 var constants = require('./util/constants'),
@@ -994,7 +559,7 @@ Logging.wrapper = Faye;
 
 module.exports = Faye;
 
-},{"./mixins/logging":13,"./protocol/client":17,"./protocol/scheduler":23,"./util/constants":35}],12:[function(require,module,exports){
+},{"./mixins/logging":11,"./protocol/client":15,"./protocol/scheduler":21,"./util/constants":33}],10:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1046,7 +611,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/promise":40}],13:[function(require,module,exports){
+},{"../util/promise":38}],11:[function(require,module,exports){
 'use strict';
 
 var toJSON = require('../util/to_json');
@@ -1095,7 +660,7 @@ for (var key in Logging.LOG_LEVELS)
 
 module.exports = Logging;
 
-},{"../util/to_json":42}],14:[function(require,module,exports){
+},{"../util/to_json":40}],12:[function(require,module,exports){
 'use strict';
 
 var extend       = require('../util/extend'),
@@ -1134,7 +699,7 @@ Publisher.trigger = Publisher.emit;
 
 module.exports = Publisher;
 
-},{"../util/event_emitter":38,"../util/extend":39}],15:[function(require,module,exports){
+},{"../util/event_emitter":36,"../util/extend":37}],13:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1164,7 +729,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],16:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 var Class     = require('../util/class'),
@@ -1298,7 +863,7 @@ extend(Channel, {
 
 module.exports = Channel;
 
-},{"../mixins/publisher":14,"../util/class":34,"../util/extend":39,"./grammar":21}],17:[function(require,module,exports){
+},{"../mixins/publisher":12,"../util/class":32,"../util/extend":37,"./grammar":19}],15:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1688,7 +1253,7 @@ extend(Client.prototype, Extensible);
 module.exports = Client;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../mixins/deferrable":12,"../mixins/logging":13,"../mixins/publisher":14,"../util/array":32,"../util/browser":33,"../util/class":34,"../util/constants":35,"../util/extend":39,"../util/promise":40,"../util/uri":43,"../util/validate_options":44,"./channel":16,"./dispatcher":18,"./error":19,"./extensible":20,"./publication":22,"./subscription":24,"asap":7}],18:[function(require,module,exports){
+},{"../mixins/deferrable":10,"../mixins/logging":11,"../mixins/publisher":12,"../util/array":30,"../util/browser":31,"../util/class":32,"../util/constants":33,"../util/extend":37,"../util/promise":38,"../util/uri":41,"../util/validate_options":42,"./channel":14,"./dispatcher":16,"./error":17,"./extensible":18,"./publication":20,"./subscription":22,"asap":7}],16:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1877,7 +1442,7 @@ extend(Dispatcher.prototype, Logging);
 module.exports = Dispatcher;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../mixins/logging":13,"../mixins/publisher":14,"../transport":25,"../util/class":34,"../util/cookies":36,"../util/extend":39,"../util/uri":43,"./scheduler":23}],19:[function(require,module,exports){
+},{"../mixins/logging":11,"../mixins/publisher":12,"../transport":23,"../util/class":32,"../util/cookies":34,"../util/extend":37,"../util/uri":41,"./scheduler":21}],17:[function(require,module,exports){
 'use strict';
 
 var Class   = require('../util/class'),
@@ -1934,7 +1499,7 @@ for (var name in errors)
 
 module.exports = Error;
 
-},{"../util/class":34,"./grammar":21}],20:[function(require,module,exports){
+},{"../util/class":32,"./grammar":19}],18:[function(require,module,exports){
 'use strict';
 
 var extend  = require('../util/extend'),
@@ -1983,7 +1548,7 @@ extend(Extensible, Logging);
 
 module.exports = Extensible;
 
-},{"../mixins/logging":13,"../util/extend":39}],21:[function(require,module,exports){
+},{"../mixins/logging":11,"../util/extend":37}],19:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -1993,7 +1558,7 @@ module.exports = {
   VERSION:          /^([0-9])+(\.(([a-z]|[A-Z])|[0-9])(((([a-z]|[A-Z])|[0-9])|\-|\_))*)*$/
 };
 
-},{}],22:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var Class      = require('../util/class'),
@@ -2001,7 +1566,7 @@ var Class      = require('../util/class'),
 
 module.exports = Class(Deferrable);
 
-},{"../mixins/deferrable":12,"../util/class":34}],23:[function(require,module,exports){
+},{"../mixins/deferrable":10,"../util/class":32}],21:[function(require,module,exports){
 'use strict';
 
 var extend = require('../util/extend');
@@ -2049,7 +1614,7 @@ extend(Scheduler.prototype, {
 
 module.exports = Scheduler;
 
-},{"../util/extend":39}],24:[function(require,module,exports){
+},{"../util/extend":37}],22:[function(require,module,exports){
 'use strict';
 
 var Class      = require('../util/class'),
@@ -2095,7 +1660,7 @@ extend(Subscription.prototype, Deferrable);
 
 module.exports = Subscription;
 
-},{"../mixins/deferrable":12,"../util/class":34,"../util/extend":39}],25:[function(require,module,exports){
+},{"../mixins/deferrable":10,"../util/class":32,"../util/extend":37}],23:[function(require,module,exports){
 'use strict';
 
 var Transport = require('./transport');
@@ -2108,7 +1673,7 @@ Transport.register('callback-polling', require('./jsonp'));
 
 module.exports = Transport;
 
-},{"./cors":26,"./event_source":27,"./jsonp":28,"./transport":29,"./web_socket":30,"./xhr":31}],26:[function(require,module,exports){
+},{"./cors":24,"./event_source":25,"./jsonp":26,"./transport":27,"./web_socket":28,"./xhr":29}],24:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2196,7 +1761,7 @@ var CORS = extend(Class(Transport, {
 module.exports = CORS;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/class":34,"../util/extend":39,"../util/set":41,"../util/to_json":42,"../util/uri":43,"./transport":29}],27:[function(require,module,exports){
+},{"../util/class":32,"../util/extend":37,"../util/set":39,"../util/to_json":40,"../util/uri":41,"./transport":27}],25:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2297,7 +1862,7 @@ extend(EventSource.prototype, Deferrable);
 module.exports = EventSource;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../mixins/deferrable":12,"../util/class":34,"../util/copy_object":37,"../util/extend":39,"../util/uri":43,"./transport":29,"./xhr":31}],28:[function(require,module,exports){
+},{"../mixins/deferrable":10,"../util/class":32,"../util/copy_object":35,"../util/extend":37,"../util/uri":41,"./transport":27,"./xhr":29}],26:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2365,7 +1930,7 @@ var JSONP = extend(Class(Transport, {
 module.exports = JSONP;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/class":34,"../util/copy_object":37,"../util/extend":39,"../util/to_json":42,"../util/uri":43,"./transport":29}],29:[function(require,module,exports){
+},{"../util/class":32,"../util/copy_object":35,"../util/extend":37,"../util/to_json":40,"../util/uri":41,"./transport":27}],27:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -2580,7 +2145,7 @@ extend(Transport.prototype, Timeouts);
 module.exports = Transport;
 
 }).call(this,require('_process'))
-},{"../mixins/logging":13,"../mixins/timeouts":15,"../protocol/channel":16,"../util/array":32,"../util/class":34,"../util/cookies":36,"../util/extend":39,"../util/promise":40,"../util/uri":43,"_process":47}],30:[function(require,module,exports){
+},{"../mixins/logging":11,"../mixins/timeouts":13,"../protocol/channel":14,"../util/array":30,"../util/class":32,"../util/cookies":34,"../util/extend":37,"../util/promise":38,"../util/uri":41,"_process":44}],28:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2745,7 +2310,7 @@ if (browser.Event && global.onbeforeunload !== undefined)
 module.exports = WebSocket;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../mixins/deferrable":12,"../util/browser":33,"../util/class":34,"../util/copy_object":37,"../util/extend":39,"../util/promise":40,"../util/set":41,"../util/to_json":42,"../util/uri":43,"../util/websocket":45,"./transport":29}],31:[function(require,module,exports){
+},{"../mixins/deferrable":10,"../util/browser":31,"../util/class":32,"../util/copy_object":35,"../util/extend":37,"../util/promise":38,"../util/set":39,"../util/to_json":40,"../util/uri":41,"../util/websocket":43,"./transport":27}],29:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2831,7 +2396,7 @@ var XHR = extend(Class(Transport, {
 module.exports = XHR;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/browser":33,"../util/class":34,"../util/extend":39,"../util/to_json":42,"../util/uri":43,"./transport":29}],32:[function(require,module,exports){
+},{"../util/browser":31,"../util/class":32,"../util/extend":37,"../util/to_json":40,"../util/uri":41,"./transport":27}],30:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -2907,7 +2472,7 @@ module.exports = {
   }
 };
 
-},{}],33:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2961,7 +2526,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],34:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 var extend = require('./extend');
@@ -2986,7 +2551,7 @@ module.exports = function(parent, methods) {
   return klass;
 };
 
-},{"./extend":39}],35:[function(require,module,exports){
+},{"./extend":37}],33:[function(require,module,exports){
 module.exports = {
   VERSION:          '1.2.3',
 
@@ -2998,12 +2563,12 @@ module.exports = {
   MANDATORY_CONNECTION_TYPES: ['long-polling', 'callback-polling', 'in-process']
 };
 
-},{}],36:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 module.exports = {};
 
-},{}],37:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 var copyObject = function(object) {
@@ -3024,7 +2589,7 @@ var copyObject = function(object) {
 
 module.exports = copyObject;
 
-},{}],38:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 /*
 Copyright Joyent, Inc. and other Node contributors. All rights reserved.
 Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -3197,7 +2762,7 @@ EventEmitter.prototype.listeners = function(type) {
   return this._events[type];
 };
 
-},{}],39:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 module.exports = function(dest, source, overwrite) {
@@ -3211,7 +2776,7 @@ module.exports = function(dest, source, overwrite) {
   return dest;
 };
 
-},{}],40:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 var asap = require('asap');
@@ -3374,7 +2939,7 @@ Promise.deferred = Promise.pending = function() {
 
 module.exports = Promise;
 
-},{"asap":7}],41:[function(require,module,exports){
+},{"asap":7}],39:[function(require,module,exports){
 'use strict';
 
 var Class = require('./class');
@@ -3426,7 +2991,7 @@ module.exports = Class({
   }
 });
 
-},{"./class":34}],42:[function(require,module,exports){
+},{"./class":32}],40:[function(require,module,exports){
 'use strict';
 
 // http://assanka.net/content/tech/2009/09/02/json2-js-vs-prototype/
@@ -3437,7 +3002,7 @@ module.exports = function(object) {
   });
 };
 
-},{}],43:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -3522,7 +3087,7 @@ module.exports = {
   }
 };
 
-},{}],44:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 var array = require('./array');
@@ -3534,7 +3099,7 @@ module.exports = function(options, validKeys) {
   }
 };
 
-},{"./array":32}],45:[function(require,module,exports){
+},{"./array":30}],43:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -3548,38 +3113,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],46:[function(require,module,exports){
-module.exports = inherits
-
-function inherits (c, p, proto) {
-  proto = proto || {}
-  var e = {}
-  ;[c.prototype, proto].forEach(function (s) {
-    Object.getOwnPropertyNames(s).forEach(function (k) {
-      e[k] = Object.getOwnPropertyDescriptor(s, k)
-    })
-  })
-  c.prototype = Object.create(p.prototype, e)
-  c.super = p
-}
-
-//function Child () {
-//  Child.super.call(this)
-//  console.error([this
-//                ,this.constructor
-//                ,this.constructor === Child
-//                ,this.constructor.super === Parent
-//                ,Object.getPrototypeOf(this) === Child.prototype
-//                ,Object.getPrototypeOf(Object.getPrototypeOf(this))
-//                 === Parent.prototype
-//                ,this instanceof Child
-//                ,this instanceof Parent])
-//}
-//function Parent () {}
-//inherits(Child, Parent)
-//new Child
-
-},{}],47:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -3761,68 +3295,157 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],48:[function(require,module,exports){
-var boids = require('boids');
+},{}],45:[function(require,module,exports){
+var SCHOOL_MIN_X = 0;
+var SCHOOL_MAX_X = 500;
+var SCHOOL_MIN_Y = 0;
+var SCHOOL_MAX_Y = 500;
 
-var flock = null;
-var FLOCK_MIN_X = 0;
-var FLOCK_MAX_X = 500;
-var FLOCK_MIN_Y = 0;
-var FLOCK_MAX_Y = 500;
+var rand = function(a, b) {
+  return Math.random() * (b - a) + a;
+}
 
-module.exports = {
-  init: function(width, height) {
-    flock = boids({
-      boids: 100,              // The amount of boids to use 
-      speedLimit: 0.5,          // Max steps to take per tick 
-      accelerationLimit: 0.2,   // Max acceleration per tick 
-      separationDistance: 60, // Radius at which boids avoid others 
-      alignmentDistance: 500, // Radius at which boids align with others 
-      cohesionDistance: 180,  // Radius at which boids approach others 
-      separationForce: 0.05,  // Speed to avoid at 
-      alignmentForce: 0.50,   // Speed to align with other boids 
-      choesionForce: 0.05,     // Speed to move towards other boids 
-    });
+var maybe = function(p) {
+  return Math.random() <= p;
+}
 
-    flock.boids.forEach(function(boid) {
-      boid[0] = Math.random() * width;
-      boid[1] = Math.random() * height;
-    });
-  },
+var Fish = function(options) {
+  this.options = options;
 
-  tick: function() {
-    flock.tick();
+  this.id = Math.floor(Math.random() * 100000);
+  this.x = rand(SCHOOL_MIN_X, SCHOOL_MAX_X);
+  this.y = rand(SCHOOL_MIN_Y, SCHOOL_MAX_Y);
+  this.vx = this.options.restingSpeed * rand(0.9, 1.1);
+  if(maybe(0.5)) {
+    this.vx *= -1;
+  }
+  this.vy = rand(-0.5, 0.5);
 
-    flock.boids.forEach(function(boid) {
-      if(boid[0] < FLOCK_MIN_X) {
-        boid[0] = FLOCK_MIN_X;
-        boid[2] = 10;
-      } else if(boid[0] > FLOCK_MAX_X) {
-        boid[0] = FLOCK_MAX_X;
-        boid[2] = -10;
-      }
+  this.individualRestingSpeed = Math.abs(this.vx);
+  this.speedAfterTurn = 0;
+  this.turnDirection = 0;
+  this.startled = false;
+};
 
-      if(boid[1] < FLOCK_MIN_Y) {
-        boid[1] = FLOCK_MIN_Y;
-        boid[3] = 10;
-      } else if(boid[1] > FLOCK_MAX_Y) {
-        boid[1] = FLOCK_MAX_Y;
-        boid[3] = -10;
-      }
-    });
-  },
+Fish.prototype.update = function() {
+  var dt = 1 / 60;
 
-  boids: function() {
-    return flock.boids;
-  },
+  // basic motion
+  this.x += this.vx * dt;
+  this.y += this.vy * dt; 
 
-  addAttractor: function(x, y, radius, force) {
-    flock.attractors.push([x, y, radius, Math.abs(force)]);
-  },
+  this.doTurn();
 
-  addRepeller: function(x, y, radius, force) {
-    flock.attractors.push([x, y, radius, -Math.abs(force)]);
+  this.doMiniStartle();
+
+  if(maybe(0.1)) {
+    this.vy = rand(-0.5, 0.5);
+  }
+
+  this.checkCollision();
+}
+
+Fish.prototype.doMiniStartle = function() {
+  if(!this.startled && maybe(0.001)) {
+    this.startled = true;
+    this.vx *= rand(2, 3);
+  }
+  
+  if(Math.abs(this.vx) > this.individualRestingSpeed) {
+    this.vx *= 0.99;
+  }
+
+  if(Math.abs(this.vx) < this.individualRestingSpeed) {
+    this.startled = false;
+    this.vx = Math.sign(this.vx) * this.individualRestingSpeed;
   }
 };
 
-},{"boids":9}]},{},[4]);
+Fish.prototype.doTurn = function() {
+  if(this.turnDirection === 0 && maybe(0.001)) {
+    this.turnDirection = -Math.sign(this.vx);
+    this.speedAfterTurn = -this.vx;
+  }
+
+  if(this.turnDirection === -1 && this.vx > this.speedAfterTurn) {
+    this.vx -= 1;
+  } else if(this.turnDirection === 1 && this.vx < this.speedAfterTurn) {
+    this.vx += 1;
+  }
+
+  if(this.turnDirection === -1 && this.vx <= this.speedAfterTurn) {
+    this.turnDirection = 0;
+  } else if(this.turnDirection === 1 && this.vx >= this.speedAfterTurn) {
+    this.turnDirection = 0;
+  }
+};
+
+Fish.prototype.checkCollision = function() {
+  // Wall collision
+  if(this.x < SCHOOL_MIN_X) {
+    this.x = SCHOOL_MIN_X;
+    this.vx = Math.abs(this.vx);
+  } else if(this.x > SCHOOL_MAX_X) {
+    this.x = SCHOOL_MAX_X;
+    this.vx = -Math.abs(this.vx);
+  }
+  
+  if(this.y < SCHOOL_MIN_Y) {
+    this.y = SCHOOL_MIN_Y;
+    this.vy = Math.abs(this.vy);
+  } else if(this.y > SCHOOL_MAX_Y) {
+    this.y = SCHOOL_MAX_Y;
+    this.vy = -Math.abs(this.vy);
+  }
+};
+
+Fish.prototype.serialize = function() {
+  return {
+    x: this.x,
+    y: this.y,
+    vx: this.vx,
+    vy: this.vy,
+    startled: this.startled
+  };
+};
+
+module.exports = Fish;
+
+},{}],46:[function(require,module,exports){
+var Fish = require('./fish');
+
+var school = null;
+
+module.exports = {
+  init: function() {
+    school = [];
+    for(var i = 0; i < 20; i++) {
+      school.push(new Fish({
+        restingSpeed: 10,
+        startledSpeed: 50
+      }));
+    }
+  },
+
+  tick: function() {
+    school.forEach(function(fish) {
+      fish.update();
+    });
+  },
+
+  all: function() {
+    return school;
+  },
+
+  get: function(i) {
+    return school[i];
+  },
+
+  serialize: function() {
+    return school.map(function(fish) {
+      return fish.serialize();
+    });
+  }
+};
+
+},{"./fish":45}]},{},[3]);

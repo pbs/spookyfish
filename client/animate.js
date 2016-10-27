@@ -15,8 +15,11 @@ var fishImages = [
 ];
 
 module.exports = {
-  load: function (){
-    PIXI.loader.add(fishImages).load(this.init.bind(this));
+  load: function (callback){
+    PIXI.loader.add(fishImages).load(function() {
+      this.init();
+      callback && callback();
+    }.bind(this));
   },
   
   init: function() {

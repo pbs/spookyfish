@@ -50,11 +50,11 @@ module.exports = {
     HEIGHT = boundingRect.height;
     
     flock.boids().forEach(function(boid, index){
-      var randomFish = images[Math.floor(Math.random() * images.length)];
+      var randomFish = fishImages[Math.floor(Math.random() * fishImages.length)];
       var randomScale = Math.floor(Math.random() * (5 - 2) - 2 ) / 5;
             
       var fish = new PIXI.Sprite(
-        PIXI.loader.resources[fishImages[randomFish]].texture
+        PIXI.loader.resources[randomFish].texture
       );
             
       fish.x = boid[0];

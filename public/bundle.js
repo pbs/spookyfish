@@ -6,34 +6,99 @@ var boundingRect;
 var WIDTH;
 var HEIGHT;
 var ctx;
+var renderer;
+var stage;
+
+var fishImages = [
+  "src-img/halloween_fish1.png",
+  "src-img/halloween_fish2.png", 
+  "src-img/halloween_fish3.png"
+];
 
 module.exports = {
+  load: function (){
+    PIXI.loader.add(fishImages).load(this.init.bind(this));
+  },
+  
   init: function() {
-    var canvas = document.querySelector('canvas');
-    ctx = canvas.getContext('2d');
+    // Setup the renderer
+    renderer = new PIXI.autoDetectRenderer(WIDTH, HEIGHT);
+    document.body.appendChild(renderer.view);
+
+    stage = new PIXI.Container();
+    
+    renderer.view.style.position = "absolute";
+    
+    renderer.view.style.display = "block";
+    renderer.autoResize = true;
+    renderer.resize(window.innerWidth, window.innerHeight);
+    
+    viewport.setElement(renderer.view);
+    
+    // things
+    var screenPosition = Number(location.hash.substring(1))
+    if(isNaN(screenPosition)) {
+      screenPosition = 0;
+    }
+    var screenLeft = screenPosition * window.innerWidth/2;
+    var screenRight = screenLeft + window.innerWidth/2;
+
+    viewport.setBoundaries(0, screenLeft, window.innerHeight, screenRight);
+    window.viewport = viewport;    
 
     boundingRect = document.body.getBoundingClientRect();
     WIDTH = boundingRect.width;
     HEIGHT = boundingRect.height;
+    
+    flock.boids().forEach(function(boid, index){
+      var randomFish = fishImages[Math.floor(Math.random() * fishImages.length)];
+      var randomScale = Math.floor(Math.random() * (5 - 2) - 2 ) / 5;
+            
+      var fish = new PIXI.Sprite(
+        PIXI.loader.resources[randomFish].texture
+      );
+            
+      fish.x = boid[0];
+      fish.y = boid[1];
+      fish.anchor.set(0.5);
+      
+      fish.scale.set(randomScale, randomScale);
+      
+      boid.push(randomScale, fish);
+            
+      stage.addChild(fish); 
+    });
+    
+    renderer.render(stage);
+    requestAnimationFrame(this.update.bind(this));
   },
-
+  
   update: function() {
+    requestAnimationFrame(this.update.bind(this));
+
+    
     flock.tick();
 
     this.draw();
-
-    requestAnimationFrame(this.update.bind(this));
+    renderer.render(stage);
   },
 
   draw: function() {
-    ctx.clearRect(0, 0, WIDTH, HEIGHT);
-    ctx.fillStyle = 'black';
+    //ctx.clearRect(0, 0, WIDTH, WIDTH);
+    //ctx.fillStyle = 'black';
+
     flock
       .boids()
-      .filter(viewport.containsBoid)
-      .map(viewport.toLocalCoords)
-      .forEach(function(boid) {
-        ctx.fillRect(boid[0], boid[1], 4, 4);
+      .forEach(function(boid, index) {
+        var thisFish = boid[boid.length-1];
+        
+        //boid = [x, y, w, h, vx, vy ]
+        thisFish.x = boid[0];
+        thisFish.y = boid[1];
+      
+        thisFish.rotation = Math.sin(boid[3]);
+        
+        thisFish.scale.x = Math.sign(boid[2]) * Math.abs(thisFish.scale.x);      
       });
   },
 };
@@ -43,32 +108,29 @@ var dt = 1 / 60;
 
 module.exports = {
   zerothOrder: function(localBoid, actualBoid) {
-    return actualBoid;
+    localBoid[0] = actualBoid[0];
+    localBoid[1] = actualBoid[1];
+    localBoid[2] = actualBoid[2];
+    localBoid[3] = actualBoid[3];
+    localBoid[4] = actualBoid[4];
+    localBoid[5] = actualBoid[5];
+    return localBoid;
   },
 
   firstOrder: function(localBoid, actualBoid) {
-    return [
-      localBoid[0],
-      localBoid[1],
-      (actualBoid[0] - localBoid[0]) / dt + actualBoid[0],
-      (actualBoid[1] - localBoid[1]) / dt + actualBoid[1],
-      actualBoid[4],
-      actualBoid[5],
-    ];
+    var vx = (actualBoid[0] - localBoid[0]) / dt + actualBoid[0];
+    var vy = (actualBoid[1] - localBoid[1]) / dt + actualBoid[1];
+    localBoid[2] = vx;
+    localBoid[3] = vy;
+    return localBoid;
   },
 
   secondOrder: function(localBoid, actualBoid) {
-    var ax = 2 / dt / dt * (actualBoid[0] - localBoid[0] + dt * (actualBoid[1] - localBoid[1]));
+    var ax = 2 / dt / dt * (actualBoid[0] - localBoid[0] + dt * (actualBoid[2] - localBoid[2]));
     var ay = 2 / dt / dt * (actualBoid[1] - localBoid[1] + dt * (actualBoid[1] - localBoid[1]));
-
-    return [
-      localBoid[0],
-      localBoid[1],
-      localBoid[2],
-      localBoid[3],
-      ax,
-      ay
-    ];
+    localBoid[4] = ax;
+    localBoid[5] = ay;
+    return localBoid;
   },
 };
 
@@ -118,34 +180,23 @@ var flock = require('../shared/flock');
 var messages = require('./messages');
 var flockSync = require('./flock-sync');
 var animate = require('./animate');
+//var PIXI = require('pixi.js');
 
 var boundingRect = document.body.getBoundingClientRect();
 var WIDTH = boundingRect.width;
 var HEIGHT = boundingRect.height;
 
-var canvas = document.querySelector('canvas');
-canvas.setAttribute('width', WIDTH);
-canvas.setAttribute('height', HEIGHT);
-
-var screenPosition = Number(location.hash.substring(1))
-if(isNaN(screenPosition)) {
-  screenPosition = 0;
-}
-var screenLeft = screenPosition * 250;
-var screenRight = screenLeft + 250;
-
-viewport.setElement(canvas);
-viewport.setBoundaries(0, screenLeft, HEIGHT, screenRight);
-window.viewport = viewport;
+//var canvas = document.querySelector('canvas');
+//canvas.setAttribute('width', WIDTH);
+//canvas.setAttribute('height', HEIGHT);
 
 flock.init(WIDTH, HEIGHT);
 
 messages.init();
 flockSync.init();
 
-animate.init();
-requestAnimationFrame(animate.update.bind(animate));
-
+animate.load();
+//requestAnimationFrame(animate.update.bind(animate));
 },{"../shared/flock":48,"./animate":1,"./flock-sync":3,"./messages":5,"./viewport":6}],5:[function(require,module,exports){
 var faye = require('faye');
 
@@ -167,13 +218,14 @@ module.exports = {
   }
 };
 
-},{"faye":11}],6:[function(require,module,exports){
+},{"faye":13}],6:[function(require,module,exports){
 var element = null;
 
 var top = 0;
 var left = 0;
-var bottom = 500;
-var right = 500;
+var bottom = window.innerWidth;
+var right = window.innerHeight;
+
 var viewportWidth = -1;
 var viewportHeight = -1;
 
@@ -199,309 +251,19 @@ module.exports = {
   },
 
   toLocalCoords: function(boid) {
-    var elementWidth = Number(element.getAttribute('width'));
-    var elementHeight = Number(element.getAttribute('height'));
-
-    return [ (boid[0] - left) / viewportWidth * elementWidth, (boid[1] - top) / viewportHeight * elementHeight ];
+//    var elementWidth = Number(element.getAttribute('width'));
+//    var elementHeight = Number(element.getAttribute('height'));    
+    var elementWidth = window.innerWidth;
+    var elementHeight = window.innerHeight;
+    var x = (boid[0] - left) / viewportWidth * elementWidth;
+    var y = (boid[1] - top) / viewportHeight * elementHeight;
+    boid[0] = x;
+    boid[1] = y;
+    return boid;
   }
 };
 
 },{}],7:[function(require,module,exports){
-"use strict";
-
-// rawAsap provides everything we need except exception management.
-var rawAsap = require("./raw");
-// RawTasks are recycled to reduce GC churn.
-var freeTasks = [];
-// We queue errors to ensure they are thrown in right order (FIFO).
-// Array-as-queue is good enough here, since we are just dealing with exceptions.
-var pendingErrors = [];
-var requestErrorThrow = rawAsap.makeRequestCallFromTimer(throwFirstError);
-
-function throwFirstError() {
-    if (pendingErrors.length) {
-        throw pendingErrors.shift();
-    }
-}
-
-/**
- * Calls a task as soon as possible after returning, in its own event, with priority
- * over other events like animation, reflow, and repaint. An error thrown from an
- * event will not interrupt, nor even substantially slow down the processing of
- * other events, but will be rather postponed to a lower priority event.
- * @param {{call}} task A callable object, typically a function that takes no
- * arguments.
- */
-module.exports = asap;
-function asap(task) {
-    var rawTask;
-    if (freeTasks.length) {
-        rawTask = freeTasks.pop();
-    } else {
-        rawTask = new RawTask();
-    }
-    rawTask.task = task;
-    rawAsap(rawTask);
-}
-
-// We wrap tasks with recyclable task objects.  A task object implements
-// `call`, just like a function.
-function RawTask() {
-    this.task = null;
-}
-
-// The sole purpose of wrapping the task is to catch the exception and recycle
-// the task object after its single use.
-RawTask.prototype.call = function () {
-    try {
-        this.task.call();
-    } catch (error) {
-        if (asap.onerror) {
-            // This hook exists purely for testing purposes.
-            // Its name will be periodically randomized to break any code that
-            // depends on its existence.
-            asap.onerror(error);
-        } else {
-            // In a web browser, exceptions are not fatal. However, to avoid
-            // slowing down the queue of pending tasks, we rethrow the error in a
-            // lower priority turn.
-            pendingErrors.push(error);
-            requestErrorThrow();
-        }
-    } finally {
-        this.task = null;
-        freeTasks[freeTasks.length] = this;
-    }
-};
-
-},{"./raw":8}],8:[function(require,module,exports){
-(function (global){
-"use strict";
-
-// Use the fastest means possible to execute a task in its own turn, with
-// priority over other events including IO, animation, reflow, and redraw
-// events in browsers.
-//
-// An exception thrown by a task will permanently interrupt the processing of
-// subsequent tasks. The higher level `asap` function ensures that if an
-// exception is thrown by a task, that the task queue will continue flushing as
-// soon as possible, but if you use `rawAsap` directly, you are responsible to
-// either ensure that no exceptions are thrown from your task, or to manually
-// call `rawAsap.requestFlush` if an exception is thrown.
-module.exports = rawAsap;
-function rawAsap(task) {
-    if (!queue.length) {
-        requestFlush();
-        flushing = true;
-    }
-    // Equivalent to push, but avoids a function call.
-    queue[queue.length] = task;
-}
-
-var queue = [];
-// Once a flush has been requested, no further calls to `requestFlush` are
-// necessary until the next `flush` completes.
-var flushing = false;
-// `requestFlush` is an implementation-specific method that attempts to kick
-// off a `flush` event as quickly as possible. `flush` will attempt to exhaust
-// the event queue before yielding to the browser's own event loop.
-var requestFlush;
-// The position of the next task to execute in the task queue. This is
-// preserved between calls to `flush` so that it can be resumed if
-// a task throws an exception.
-var index = 0;
-// If a task schedules additional tasks recursively, the task queue can grow
-// unbounded. To prevent memory exhaustion, the task queue will periodically
-// truncate already-completed tasks.
-var capacity = 1024;
-
-// The flush function processes all tasks that have been scheduled with
-// `rawAsap` unless and until one of those tasks throws an exception.
-// If a task throws an exception, `flush` ensures that its state will remain
-// consistent and will resume where it left off when called again.
-// However, `flush` does not make any arrangements to be called again if an
-// exception is thrown.
-function flush() {
-    while (index < queue.length) {
-        var currentIndex = index;
-        // Advance the index before calling the task. This ensures that we will
-        // begin flushing on the next task the task throws an error.
-        index = index + 1;
-        queue[currentIndex].call();
-        // Prevent leaking memory for long chains of recursive calls to `asap`.
-        // If we call `asap` within tasks scheduled by `asap`, the queue will
-        // grow, but to avoid an O(n) walk for every task we execute, we don't
-        // shift tasks off the queue after they have been executed.
-        // Instead, we periodically shift 1024 tasks off the queue.
-        if (index > capacity) {
-            // Manually shift all values starting at the index back to the
-            // beginning of the queue.
-            for (var scan = 0, newLength = queue.length - index; scan < newLength; scan++) {
-                queue[scan] = queue[scan + index];
-            }
-            queue.length -= index;
-            index = 0;
-        }
-    }
-    queue.length = 0;
-    index = 0;
-    flushing = false;
-}
-
-// `requestFlush` is implemented using a strategy based on data collected from
-// every available SauceLabs Selenium web driver worker at time of writing.
-// https://docs.google.com/spreadsheets/d/1mG-5UYGup5qxGdEMWkhP6BWCz053NUb2E1QoUTU16uA/edit#gid=783724593
-
-// Safari 6 and 6.1 for desktop, iPad, and iPhone are the only browsers that
-// have WebKitMutationObserver but not un-prefixed MutationObserver.
-// Must use `global` or `self` instead of `window` to work in both frames and web
-// workers. `global` is a provision of Browserify, Mr, Mrs, or Mop.
-
-/* globals self */
-var scope = typeof global !== "undefined" ? global : self;
-var BrowserMutationObserver = scope.MutationObserver || scope.WebKitMutationObserver;
-
-// MutationObservers are desirable because they have high priority and work
-// reliably everywhere they are implemented.
-// They are implemented in all modern browsers.
-//
-// - Android 4-4.3
-// - Chrome 26-34
-// - Firefox 14-29
-// - Internet Explorer 11
-// - iPad Safari 6-7.1
-// - iPhone Safari 7-7.1
-// - Safari 6-7
-if (typeof BrowserMutationObserver === "function") {
-    requestFlush = makeRequestCallFromMutationObserver(flush);
-
-// MessageChannels are desirable because they give direct access to the HTML
-// task queue, are implemented in Internet Explorer 10, Safari 5.0-1, and Opera
-// 11-12, and in web workers in many engines.
-// Although message channels yield to any queued rendering and IO tasks, they
-// would be better than imposing the 4ms delay of timers.
-// However, they do not work reliably in Internet Explorer or Safari.
-
-// Internet Explorer 10 is the only browser that has setImmediate but does
-// not have MutationObservers.
-// Although setImmediate yields to the browser's renderer, it would be
-// preferrable to falling back to setTimeout since it does not have
-// the minimum 4ms penalty.
-// Unfortunately there appears to be a bug in Internet Explorer 10 Mobile (and
-// Desktop to a lesser extent) that renders both setImmediate and
-// MessageChannel useless for the purposes of ASAP.
-// https://github.com/kriskowal/q/issues/396
-
-// Timers are implemented universally.
-// We fall back to timers in workers in most engines, and in foreground
-// contexts in the following browsers.
-// However, note that even this simple case requires nuances to operate in a
-// broad spectrum of browsers.
-//
-// - Firefox 3-13
-// - Internet Explorer 6-9
-// - iPad Safari 4.3
-// - Lynx 2.8.7
-} else {
-    requestFlush = makeRequestCallFromTimer(flush);
-}
-
-// `requestFlush` requests that the high priority event queue be flushed as
-// soon as possible.
-// This is useful to prevent an error thrown in a task from stalling the event
-// queue if the exception handled by Node.js’s
-// `process.on("uncaughtException")` or by a domain.
-rawAsap.requestFlush = requestFlush;
-
-// To request a high priority event, we induce a mutation observer by toggling
-// the text of a text node between "1" and "-1".
-function makeRequestCallFromMutationObserver(callback) {
-    var toggle = 1;
-    var observer = new BrowserMutationObserver(callback);
-    var node = document.createTextNode("");
-    observer.observe(node, {characterData: true});
-    return function requestCall() {
-        toggle = -toggle;
-        node.data = toggle;
-    };
-}
-
-// The message channel technique was discovered by Malte Ubl and was the
-// original foundation for this library.
-// http://www.nonblocking.io/2011/06/windownexttick.html
-
-// Safari 6.0.5 (at least) intermittently fails to create message ports on a
-// page's first load. Thankfully, this version of Safari supports
-// MutationObservers, so we don't need to fall back in that case.
-
-// function makeRequestCallFromMessageChannel(callback) {
-//     var channel = new MessageChannel();
-//     channel.port1.onmessage = callback;
-//     return function requestCall() {
-//         channel.port2.postMessage(0);
-//     };
-// }
-
-// For reasons explained above, we are also unable to use `setImmediate`
-// under any circumstances.
-// Even if we were, there is another bug in Internet Explorer 10.
-// It is not sufficient to assign `setImmediate` to `requestFlush` because
-// `setImmediate` must be called *by name* and therefore must be wrapped in a
-// closure.
-// Never forget.
-
-// function makeRequestCallFromSetImmediate(callback) {
-//     return function requestCall() {
-//         setImmediate(callback);
-//     };
-// }
-
-// Safari 6.0 has a problem where timers will get lost while the user is
-// scrolling. This problem does not impact ASAP because Safari 6.0 supports
-// mutation observers, so that implementation is used instead.
-// However, if we ever elect to use timers in Safari, the prevalent work-around
-// is to add a scroll event listener that calls for a flush.
-
-// `setTimeout` does not call the passed callback if the delay is less than
-// approximately 7 in web workers in Firefox 8 through 18, and sometimes not
-// even then.
-
-function makeRequestCallFromTimer(callback) {
-    return function requestCall() {
-        // We dispatch a timeout with a specified delay of 0 for engines that
-        // can reliably accommodate that request. This will usually be snapped
-        // to a 4 milisecond delay, but once we're flushing, there's no delay
-        // between events.
-        var timeoutHandle = setTimeout(handleTimer, 0);
-        // However, since this timer gets frequently dropped in Firefox
-        // workers, we enlist an interval handle that will try to fire
-        // an event 20 times per second until it succeeds.
-        var intervalHandle = setInterval(handleTimer, 50);
-
-        function handleTimer() {
-            // Whichever timer succeeds will cancel both timers and
-            // execute the callback.
-            clearTimeout(timeoutHandle);
-            clearInterval(intervalHandle);
-            callback();
-        }
-    };
-}
-
-// This is for `asap.js` only.
-// Its name will be periodically randomized to break any code that depends on
-// its existence.
-rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
-
-// ASAP was originally a nextTick shim included in Q. This was factored out
-// into this ASAP package. It was later adapted to RSVP which made further
-// amendments. These decisions, particularly to marginalize MessageChannel and
-// to capture the MutationObserver implementation in a closure, were integrated
-// back into ASAP proper.
-// https://github.com/tildeio/rsvp.js/blob/cddf7232546a9cf858524b75cde6f9edf72620a7/lib/rsvp/asap.js
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],9:[function(require,module,exports){
 var EventEmitter = require('events').EventEmitter
   , inherits = require('inherits')
   , POSITIONX = 0
@@ -673,7 +435,38 @@ function hypot(a, b) {
   return hi + 3 * lo / 32 + Math.max(0, 2 * lo - hi) / 8 + Math.max(0, 4 * lo - hi) / 16
 }
 
-},{"events":10,"inherits":46}],10:[function(require,module,exports){
+},{"events":9,"inherits":8}],8:[function(require,module,exports){
+module.exports = inherits
+
+function inherits (c, p, proto) {
+  proto = proto || {}
+  var e = {}
+  ;[c.prototype, proto].forEach(function (s) {
+    Object.getOwnPropertyNames(s).forEach(function (k) {
+      e[k] = Object.getOwnPropertyDescriptor(s, k)
+    })
+  })
+  c.prototype = Object.create(p.prototype, e)
+  c.super = p
+}
+
+//function Child () {
+//  Child.super.call(this)
+//  console.error([this
+//                ,this.constructor
+//                ,this.constructor === Child
+//                ,this.constructor.super === Parent
+//                ,Object.getPrototypeOf(this) === Child.prototype
+//                ,Object.getPrototypeOf(Object.getPrototypeOf(this))
+//                 === Parent.prototype
+//                ,this instanceof Child
+//                ,this instanceof Parent])
+//}
+//function Parent () {}
+//inherits(Child, Parent)
+//new Child
+
+},{}],9:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -977,7 +770,484 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
+},{}],10:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
 },{}],11:[function(require,module,exports){
+"use strict";
+
+// rawAsap provides everything we need except exception management.
+var rawAsap = require("./raw");
+// RawTasks are recycled to reduce GC churn.
+var freeTasks = [];
+// We queue errors to ensure they are thrown in right order (FIFO).
+// Array-as-queue is good enough here, since we are just dealing with exceptions.
+var pendingErrors = [];
+var requestErrorThrow = rawAsap.makeRequestCallFromTimer(throwFirstError);
+
+function throwFirstError() {
+    if (pendingErrors.length) {
+        throw pendingErrors.shift();
+    }
+}
+
+/**
+ * Calls a task as soon as possible after returning, in its own event, with priority
+ * over other events like animation, reflow, and repaint. An error thrown from an
+ * event will not interrupt, nor even substantially slow down the processing of
+ * other events, but will be rather postponed to a lower priority event.
+ * @param {{call}} task A callable object, typically a function that takes no
+ * arguments.
+ */
+module.exports = asap;
+function asap(task) {
+    var rawTask;
+    if (freeTasks.length) {
+        rawTask = freeTasks.pop();
+    } else {
+        rawTask = new RawTask();
+    }
+    rawTask.task = task;
+    rawAsap(rawTask);
+}
+
+// We wrap tasks with recyclable task objects.  A task object implements
+// `call`, just like a function.
+function RawTask() {
+    this.task = null;
+}
+
+// The sole purpose of wrapping the task is to catch the exception and recycle
+// the task object after its single use.
+RawTask.prototype.call = function () {
+    try {
+        this.task.call();
+    } catch (error) {
+        if (asap.onerror) {
+            // This hook exists purely for testing purposes.
+            // Its name will be periodically randomized to break any code that
+            // depends on its existence.
+            asap.onerror(error);
+        } else {
+            // In a web browser, exceptions are not fatal. However, to avoid
+            // slowing down the queue of pending tasks, we rethrow the error in a
+            // lower priority turn.
+            pendingErrors.push(error);
+            requestErrorThrow();
+        }
+    } finally {
+        this.task = null;
+        freeTasks[freeTasks.length] = this;
+    }
+};
+
+},{"./raw":12}],12:[function(require,module,exports){
+(function (global){
+"use strict";
+
+// Use the fastest means possible to execute a task in its own turn, with
+// priority over other events including IO, animation, reflow, and redraw
+// events in browsers.
+//
+// An exception thrown by a task will permanently interrupt the processing of
+// subsequent tasks. The higher level `asap` function ensures that if an
+// exception is thrown by a task, that the task queue will continue flushing as
+// soon as possible, but if you use `rawAsap` directly, you are responsible to
+// either ensure that no exceptions are thrown from your task, or to manually
+// call `rawAsap.requestFlush` if an exception is thrown.
+module.exports = rawAsap;
+function rawAsap(task) {
+    if (!queue.length) {
+        requestFlush();
+        flushing = true;
+    }
+    // Equivalent to push, but avoids a function call.
+    queue[queue.length] = task;
+}
+
+var queue = [];
+// Once a flush has been requested, no further calls to `requestFlush` are
+// necessary until the next `flush` completes.
+var flushing = false;
+// `requestFlush` is an implementation-specific method that attempts to kick
+// off a `flush` event as quickly as possible. `flush` will attempt to exhaust
+// the event queue before yielding to the browser's own event loop.
+var requestFlush;
+// The position of the next task to execute in the task queue. This is
+// preserved between calls to `flush` so that it can be resumed if
+// a task throws an exception.
+var index = 0;
+// If a task schedules additional tasks recursively, the task queue can grow
+// unbounded. To prevent memory exhaustion, the task queue will periodically
+// truncate already-completed tasks.
+var capacity = 1024;
+
+// The flush function processes all tasks that have been scheduled with
+// `rawAsap` unless and until one of those tasks throws an exception.
+// If a task throws an exception, `flush` ensures that its state will remain
+// consistent and will resume where it left off when called again.
+// However, `flush` does not make any arrangements to be called again if an
+// exception is thrown.
+function flush() {
+    while (index < queue.length) {
+        var currentIndex = index;
+        // Advance the index before calling the task. This ensures that we will
+        // begin flushing on the next task the task throws an error.
+        index = index + 1;
+        queue[currentIndex].call();
+        // Prevent leaking memory for long chains of recursive calls to `asap`.
+        // If we call `asap` within tasks scheduled by `asap`, the queue will
+        // grow, but to avoid an O(n) walk for every task we execute, we don't
+        // shift tasks off the queue after they have been executed.
+        // Instead, we periodically shift 1024 tasks off the queue.
+        if (index > capacity) {
+            // Manually shift all values starting at the index back to the
+            // beginning of the queue.
+            for (var scan = 0, newLength = queue.length - index; scan < newLength; scan++) {
+                queue[scan] = queue[scan + index];
+            }
+            queue.length -= index;
+            index = 0;
+        }
+    }
+    queue.length = 0;
+    index = 0;
+    flushing = false;
+}
+
+// `requestFlush` is implemented using a strategy based on data collected from
+// every available SauceLabs Selenium web driver worker at time of writing.
+// https://docs.google.com/spreadsheets/d/1mG-5UYGup5qxGdEMWkhP6BWCz053NUb2E1QoUTU16uA/edit#gid=783724593
+
+// Safari 6 and 6.1 for desktop, iPad, and iPhone are the only browsers that
+// have WebKitMutationObserver but not un-prefixed MutationObserver.
+// Must use `global` or `self` instead of `window` to work in both frames and web
+// workers. `global` is a provision of Browserify, Mr, Mrs, or Mop.
+
+/* globals self */
+var scope = typeof global !== "undefined" ? global : self;
+var BrowserMutationObserver = scope.MutationObserver || scope.WebKitMutationObserver;
+
+// MutationObservers are desirable because they have high priority and work
+// reliably everywhere they are implemented.
+// They are implemented in all modern browsers.
+//
+// - Android 4-4.3
+// - Chrome 26-34
+// - Firefox 14-29
+// - Internet Explorer 11
+// - iPad Safari 6-7.1
+// - iPhone Safari 7-7.1
+// - Safari 6-7
+if (typeof BrowserMutationObserver === "function") {
+    requestFlush = makeRequestCallFromMutationObserver(flush);
+
+// MessageChannels are desirable because they give direct access to the HTML
+// task queue, are implemented in Internet Explorer 10, Safari 5.0-1, and Opera
+// 11-12, and in web workers in many engines.
+// Although message channels yield to any queued rendering and IO tasks, they
+// would be better than imposing the 4ms delay of timers.
+// However, they do not work reliably in Internet Explorer or Safari.
+
+// Internet Explorer 10 is the only browser that has setImmediate but does
+// not have MutationObservers.
+// Although setImmediate yields to the browser's renderer, it would be
+// preferrable to falling back to setTimeout since it does not have
+// the minimum 4ms penalty.
+// Unfortunately there appears to be a bug in Internet Explorer 10 Mobile (and
+// Desktop to a lesser extent) that renders both setImmediate and
+// MessageChannel useless for the purposes of ASAP.
+// https://github.com/kriskowal/q/issues/396
+
+// Timers are implemented universally.
+// We fall back to timers in workers in most engines, and in foreground
+// contexts in the following browsers.
+// However, note that even this simple case requires nuances to operate in a
+// broad spectrum of browsers.
+//
+// - Firefox 3-13
+// - Internet Explorer 6-9
+// - iPad Safari 4.3
+// - Lynx 2.8.7
+} else {
+    requestFlush = makeRequestCallFromTimer(flush);
+}
+
+// `requestFlush` requests that the high priority event queue be flushed as
+// soon as possible.
+// This is useful to prevent an error thrown in a task from stalling the event
+// queue if the exception handled by Node.js’s
+// `process.on("uncaughtException")` or by a domain.
+rawAsap.requestFlush = requestFlush;
+
+// To request a high priority event, we induce a mutation observer by toggling
+// the text of a text node between "1" and "-1".
+function makeRequestCallFromMutationObserver(callback) {
+    var toggle = 1;
+    var observer = new BrowserMutationObserver(callback);
+    var node = document.createTextNode("");
+    observer.observe(node, {characterData: true});
+    return function requestCall() {
+        toggle = -toggle;
+        node.data = toggle;
+    };
+}
+
+// The message channel technique was discovered by Malte Ubl and was the
+// original foundation for this library.
+// http://www.nonblocking.io/2011/06/windownexttick.html
+
+// Safari 6.0.5 (at least) intermittently fails to create message ports on a
+// page's first load. Thankfully, this version of Safari supports
+// MutationObservers, so we don't need to fall back in that case.
+
+// function makeRequestCallFromMessageChannel(callback) {
+//     var channel = new MessageChannel();
+//     channel.port1.onmessage = callback;
+//     return function requestCall() {
+//         channel.port2.postMessage(0);
+//     };
+// }
+
+// For reasons explained above, we are also unable to use `setImmediate`
+// under any circumstances.
+// Even if we were, there is another bug in Internet Explorer 10.
+// It is not sufficient to assign `setImmediate` to `requestFlush` because
+// `setImmediate` must be called *by name* and therefore must be wrapped in a
+// closure.
+// Never forget.
+
+// function makeRequestCallFromSetImmediate(callback) {
+//     return function requestCall() {
+//         setImmediate(callback);
+//     };
+// }
+
+// Safari 6.0 has a problem where timers will get lost while the user is
+// scrolling. This problem does not impact ASAP because Safari 6.0 supports
+// mutation observers, so that implementation is used instead.
+// However, if we ever elect to use timers in Safari, the prevalent work-around
+// is to add a scroll event listener that calls for a flush.
+
+// `setTimeout` does not call the passed callback if the delay is less than
+// approximately 7 in web workers in Firefox 8 through 18, and sometimes not
+// even then.
+
+function makeRequestCallFromTimer(callback) {
+    return function requestCall() {
+        // We dispatch a timeout with a specified delay of 0 for engines that
+        // can reliably accommodate that request. This will usually be snapped
+        // to a 4 milisecond delay, but once we're flushing, there's no delay
+        // between events.
+        var timeoutHandle = setTimeout(handleTimer, 0);
+        // However, since this timer gets frequently dropped in Firefox
+        // workers, we enlist an interval handle that will try to fire
+        // an event 20 times per second until it succeeds.
+        var intervalHandle = setInterval(handleTimer, 50);
+
+        function handleTimer() {
+            // Whichever timer succeeds will cancel both timers and
+            // execute the callback.
+            clearTimeout(timeoutHandle);
+            clearInterval(intervalHandle);
+            callback();
+        }
+    };
+}
+
+// This is for `asap.js` only.
+// Its name will be periodically randomized to break any code that depends on
+// its existence.
+rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
+
+// ASAP was originally a nextTick shim included in Q. This was factored out
+// into this ASAP package. It was later adapted to RSVP which made further
+// amendments. These decisions, particularly to marginalize MessageChannel and
+// to capture the MutationObserver implementation in a closure, were integrated
+// back into ASAP proper.
+// https://github.com/tildeio/rsvp.js/blob/cddf7232546a9cf858524b75cde6f9edf72620a7/lib/rsvp/asap.js
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],13:[function(require,module,exports){
 'use strict';
 
 var constants = require('./util/constants'),
@@ -994,7 +1264,7 @@ Logging.wrapper = Faye;
 
 module.exports = Faye;
 
-},{"./mixins/logging":13,"./protocol/client":17,"./protocol/scheduler":23,"./util/constants":35}],12:[function(require,module,exports){
+},{"./mixins/logging":15,"./protocol/client":19,"./protocol/scheduler":25,"./util/constants":37}],14:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1046,7 +1316,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/promise":40}],13:[function(require,module,exports){
+},{"../util/promise":42}],15:[function(require,module,exports){
 'use strict';
 
 var toJSON = require('../util/to_json');
@@ -1095,7 +1365,7 @@ for (var key in Logging.LOG_LEVELS)
 
 module.exports = Logging;
 
-},{"../util/to_json":42}],14:[function(require,module,exports){
+},{"../util/to_json":44}],16:[function(require,module,exports){
 'use strict';
 
 var extend       = require('../util/extend'),
@@ -1134,7 +1404,7 @@ Publisher.trigger = Publisher.emit;
 
 module.exports = Publisher;
 
-},{"../util/event_emitter":38,"../util/extend":39}],15:[function(require,module,exports){
+},{"../util/event_emitter":40,"../util/extend":41}],17:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1164,7 +1434,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 var Class     = require('../util/class'),
@@ -1298,7 +1568,7 @@ extend(Channel, {
 
 module.exports = Channel;
 
-},{"../mixins/publisher":14,"../util/class":34,"../util/extend":39,"./grammar":21}],17:[function(require,module,exports){
+},{"../mixins/publisher":16,"../util/class":36,"../util/extend":41,"./grammar":23}],19:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1688,7 +1958,7 @@ extend(Client.prototype, Extensible);
 module.exports = Client;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../mixins/deferrable":12,"../mixins/logging":13,"../mixins/publisher":14,"../util/array":32,"../util/browser":33,"../util/class":34,"../util/constants":35,"../util/extend":39,"../util/promise":40,"../util/uri":43,"../util/validate_options":44,"./channel":16,"./dispatcher":18,"./error":19,"./extensible":20,"./publication":22,"./subscription":24,"asap":7}],18:[function(require,module,exports){
+},{"../mixins/deferrable":14,"../mixins/logging":15,"../mixins/publisher":16,"../util/array":34,"../util/browser":35,"../util/class":36,"../util/constants":37,"../util/extend":41,"../util/promise":42,"../util/uri":45,"../util/validate_options":46,"./channel":18,"./dispatcher":20,"./error":21,"./extensible":22,"./publication":24,"./subscription":26,"asap":11}],20:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1877,7 +2147,7 @@ extend(Dispatcher.prototype, Logging);
 module.exports = Dispatcher;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../mixins/logging":13,"../mixins/publisher":14,"../transport":25,"../util/class":34,"../util/cookies":36,"../util/extend":39,"../util/uri":43,"./scheduler":23}],19:[function(require,module,exports){
+},{"../mixins/logging":15,"../mixins/publisher":16,"../transport":27,"../util/class":36,"../util/cookies":38,"../util/extend":41,"../util/uri":45,"./scheduler":25}],21:[function(require,module,exports){
 'use strict';
 
 var Class   = require('../util/class'),
@@ -1934,7 +2204,7 @@ for (var name in errors)
 
 module.exports = Error;
 
-},{"../util/class":34,"./grammar":21}],20:[function(require,module,exports){
+},{"../util/class":36,"./grammar":23}],22:[function(require,module,exports){
 'use strict';
 
 var extend  = require('../util/extend'),
@@ -1983,7 +2253,7 @@ extend(Extensible, Logging);
 
 module.exports = Extensible;
 
-},{"../mixins/logging":13,"../util/extend":39}],21:[function(require,module,exports){
+},{"../mixins/logging":15,"../util/extend":41}],23:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -1993,7 +2263,7 @@ module.exports = {
   VERSION:          /^([0-9])+(\.(([a-z]|[A-Z])|[0-9])(((([a-z]|[A-Z])|[0-9])|\-|\_))*)*$/
 };
 
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 var Class      = require('../util/class'),
@@ -2001,7 +2271,7 @@ var Class      = require('../util/class'),
 
 module.exports = Class(Deferrable);
 
-},{"../mixins/deferrable":12,"../util/class":34}],23:[function(require,module,exports){
+},{"../mixins/deferrable":14,"../util/class":36}],25:[function(require,module,exports){
 'use strict';
 
 var extend = require('../util/extend');
@@ -2049,7 +2319,7 @@ extend(Scheduler.prototype, {
 
 module.exports = Scheduler;
 
-},{"../util/extend":39}],24:[function(require,module,exports){
+},{"../util/extend":41}],26:[function(require,module,exports){
 'use strict';
 
 var Class      = require('../util/class'),
@@ -2095,7 +2365,7 @@ extend(Subscription.prototype, Deferrable);
 
 module.exports = Subscription;
 
-},{"../mixins/deferrable":12,"../util/class":34,"../util/extend":39}],25:[function(require,module,exports){
+},{"../mixins/deferrable":14,"../util/class":36,"../util/extend":41}],27:[function(require,module,exports){
 'use strict';
 
 var Transport = require('./transport');
@@ -2108,7 +2378,7 @@ Transport.register('callback-polling', require('./jsonp'));
 
 module.exports = Transport;
 
-},{"./cors":26,"./event_source":27,"./jsonp":28,"./transport":29,"./web_socket":30,"./xhr":31}],26:[function(require,module,exports){
+},{"./cors":28,"./event_source":29,"./jsonp":30,"./transport":31,"./web_socket":32,"./xhr":33}],28:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2196,7 +2466,7 @@ var CORS = extend(Class(Transport, {
 module.exports = CORS;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/class":34,"../util/extend":39,"../util/set":41,"../util/to_json":42,"../util/uri":43,"./transport":29}],27:[function(require,module,exports){
+},{"../util/class":36,"../util/extend":41,"../util/set":43,"../util/to_json":44,"../util/uri":45,"./transport":31}],29:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2297,7 +2567,7 @@ extend(EventSource.prototype, Deferrable);
 module.exports = EventSource;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../mixins/deferrable":12,"../util/class":34,"../util/copy_object":37,"../util/extend":39,"../util/uri":43,"./transport":29,"./xhr":31}],28:[function(require,module,exports){
+},{"../mixins/deferrable":14,"../util/class":36,"../util/copy_object":39,"../util/extend":41,"../util/uri":45,"./transport":31,"./xhr":33}],30:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2365,7 +2635,7 @@ var JSONP = extend(Class(Transport, {
 module.exports = JSONP;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/class":34,"../util/copy_object":37,"../util/extend":39,"../util/to_json":42,"../util/uri":43,"./transport":29}],29:[function(require,module,exports){
+},{"../util/class":36,"../util/copy_object":39,"../util/extend":41,"../util/to_json":44,"../util/uri":45,"./transport":31}],31:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -2580,7 +2850,7 @@ extend(Transport.prototype, Timeouts);
 module.exports = Transport;
 
 }).call(this,require('_process'))
-},{"../mixins/logging":13,"../mixins/timeouts":15,"../protocol/channel":16,"../util/array":32,"../util/class":34,"../util/cookies":36,"../util/extend":39,"../util/promise":40,"../util/uri":43,"_process":47}],30:[function(require,module,exports){
+},{"../mixins/logging":15,"../mixins/timeouts":17,"../protocol/channel":18,"../util/array":34,"../util/class":36,"../util/cookies":38,"../util/extend":41,"../util/promise":42,"../util/uri":45,"_process":10}],32:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2745,7 +3015,7 @@ if (browser.Event && global.onbeforeunload !== undefined)
 module.exports = WebSocket;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../mixins/deferrable":12,"../util/browser":33,"../util/class":34,"../util/copy_object":37,"../util/extend":39,"../util/promise":40,"../util/set":41,"../util/to_json":42,"../util/uri":43,"../util/websocket":45,"./transport":29}],31:[function(require,module,exports){
+},{"../mixins/deferrable":14,"../util/browser":35,"../util/class":36,"../util/copy_object":39,"../util/extend":41,"../util/promise":42,"../util/set":43,"../util/to_json":44,"../util/uri":45,"../util/websocket":47,"./transport":31}],33:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2831,7 +3101,7 @@ var XHR = extend(Class(Transport, {
 module.exports = XHR;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/browser":33,"../util/class":34,"../util/extend":39,"../util/to_json":42,"../util/uri":43,"./transport":29}],32:[function(require,module,exports){
+},{"../util/browser":35,"../util/class":36,"../util/extend":41,"../util/to_json":44,"../util/uri":45,"./transport":31}],34:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -2907,7 +3177,7 @@ module.exports = {
   }
 };
 
-},{}],33:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2961,7 +3231,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],34:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 var extend = require('./extend');
@@ -2986,7 +3256,7 @@ module.exports = function(parent, methods) {
   return klass;
 };
 
-},{"./extend":39}],35:[function(require,module,exports){
+},{"./extend":41}],37:[function(require,module,exports){
 module.exports = {
   VERSION:          '1.2.3',
 
@@ -2998,12 +3268,12 @@ module.exports = {
   MANDATORY_CONNECTION_TYPES: ['long-polling', 'callback-polling', 'in-process']
 };
 
-},{}],36:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 module.exports = {};
 
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 var copyObject = function(object) {
@@ -3024,7 +3294,7 @@ var copyObject = function(object) {
 
 module.exports = copyObject;
 
-},{}],38:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /*
 Copyright Joyent, Inc. and other Node contributors. All rights reserved.
 Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -3197,7 +3467,7 @@ EventEmitter.prototype.listeners = function(type) {
   return this._events[type];
 };
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 
 module.exports = function(dest, source, overwrite) {
@@ -3211,7 +3481,7 @@ module.exports = function(dest, source, overwrite) {
   return dest;
 };
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 var asap = require('asap');
@@ -3374,7 +3644,7 @@ Promise.deferred = Promise.pending = function() {
 
 module.exports = Promise;
 
-},{"asap":7}],41:[function(require,module,exports){
+},{"asap":11}],43:[function(require,module,exports){
 'use strict';
 
 var Class = require('./class');
@@ -3426,7 +3696,7 @@ module.exports = Class({
   }
 });
 
-},{"./class":34}],42:[function(require,module,exports){
+},{"./class":36}],44:[function(require,module,exports){
 'use strict';
 
 // http://assanka.net/content/tech/2009/09/02/json2-js-vs-prototype/
@@ -3437,7 +3707,7 @@ module.exports = function(object) {
   });
 };
 
-},{}],43:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -3522,7 +3792,7 @@ module.exports = {
   }
 };
 
-},{}],44:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 var array = require('./array');
@@ -3534,7 +3804,7 @@ module.exports = function(options, validKeys) {
   }
 };
 
-},{"./array":32}],45:[function(require,module,exports){
+},{"./array":34}],47:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -3548,219 +3818,6 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],46:[function(require,module,exports){
-module.exports = inherits
-
-function inherits (c, p, proto) {
-  proto = proto || {}
-  var e = {}
-  ;[c.prototype, proto].forEach(function (s) {
-    Object.getOwnPropertyNames(s).forEach(function (k) {
-      e[k] = Object.getOwnPropertyDescriptor(s, k)
-    })
-  })
-  c.prototype = Object.create(p.prototype, e)
-  c.super = p
-}
-
-//function Child () {
-//  Child.super.call(this)
-//  console.error([this
-//                ,this.constructor
-//                ,this.constructor === Child
-//                ,this.constructor.super === Parent
-//                ,Object.getPrototypeOf(this) === Child.prototype
-//                ,Object.getPrototypeOf(Object.getPrototypeOf(this))
-//                 === Parent.prototype
-//                ,this instanceof Child
-//                ,this instanceof Parent])
-//}
-//function Parent () {}
-//inherits(Child, Parent)
-//new Child
-
-},{}],47:[function(require,module,exports){
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
 },{}],48:[function(require,module,exports){
 var boids = require('boids');
 
@@ -3773,13 +3830,13 @@ var FLOCK_MAX_Y = 500;
 module.exports = {
   init: function(width, height) {
     flock = boids({
-      boids: 100,              // The amount of boids to use 
+      boids: 10,              // The amount of boids to use 
       speedLimit: 0.5,          // Max steps to take per tick 
       accelerationLimit: 0.2,   // Max acceleration per tick 
-      separationDistance: 60, // Radius at which boids avoid others 
+      separationDistance: 100, // Radius at which boids avoid others 
       alignmentDistance: 500, // Radius at which boids align with others 
       cohesionDistance: 180,  // Radius at which boids approach others 
-      separationForce: 0.05,  // Speed to avoid at 
+      separationForce: 0.10,  // Speed to avoid at 
       alignmentForce: 0.50,   // Speed to align with other boids 
       choesionForce: 0.05,     // Speed to move towards other boids 
     });
@@ -3825,4 +3882,4 @@ module.exports = {
   }
 };
 
-},{"boids":9}]},{},[4]);
+},{"boids":7}]},{},[4]);

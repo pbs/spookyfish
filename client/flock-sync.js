@@ -3,6 +3,8 @@ var deadReckoning = require('./dead-reckoning');
 var messages = require('./messages');
 var flock = require('../shared/flock');
 
+var neverSynced = true;
+
 module.exports = {
   init: function() {
     messages.subscribe(function(data) {
@@ -18,12 +20,15 @@ module.exports = {
       var distanceError = Math.sqrt(dx * dx + dy * dy);
       totalDistanceError += distanceError;
 
-      if(distanceError > 20) {
+      if(neverSynced || distanceError > 50) {
         flock.boids()[i] = deadReckoning.zerothOrder(flock.boids()[i], newBoids[i]);
       } else {
         flock.boids()[i] = deadReckoning.secondOrder(flock.boids()[i], newBoids[i]);
       }
     }
+
+    neverSynced = false;
+
     console.log('Average position error:', totalDistanceError / newBoids.length);
   }
 };

@@ -12,7 +12,7 @@ module.exports = {
         return;
       }
 
-      school.setFeedPoints(data.feedPoints);
+      school.setFeedPoints(data.school.feedPoints);
       this.receiveVisibleSchoolUpdate(data.school.fish);
     }.bind(this));
   },

@@ -30,7 +30,6 @@ module.exports = {
   },
 
   addFeedPoint: function(x, age) {
-    feedPoints = feedPoints || [];
     feedPoints.push({
       x: x,
       age: age || 60 * 5

@@ -12,11 +12,11 @@ module.exports = {
         return;
       }
 
-      this.receiveVisibleFlockUpdate(data.boids);
+      this.receiveVisibleSchoolUpdate(data.boids);
     }.bind(this));
   },
 
-  receiveVisibleFlockUpdate: function(newBoids) {
+  receiveVisibleSchoolUpdate: function(newBoids) {
     return;
     var totalDistanceError = 0;
     for(var i = 0; i < newBoids.length; i++) {
@@ -29,9 +29,9 @@ module.exports = {
       /*
        * // Figure this out...
       if(neverSynced || distanceError > 50) {
-        flock.boids()[i] = deadReckoning.zerothOrder(flock.boids()[i], newBoids[i]);
+        school.boids()[i] = deadReckoning.zerothOrder(school.boids()[i], newBoids[i]);
       } else {
-        flock.boids()[i] = deadReckoning.secondOrder(flock.boids()[i], newBoids[i]);
+        school.boids()[i] = deadReckoning.secondOrder(school.boids()[i], newBoids[i]);
       }
      */
     }

@@ -1,7 +1,7 @@
 var viewport = require('./viewport');
 var school = require('../shared/school');
 var messages = require('./messages');
-var flockSync = require('./flock-sync');
+var schoolSync = require('./school-sync');
 var animate = require('./animate');
 
 var boundingRect = document.body.getBoundingClientRect();
@@ -26,7 +26,7 @@ window.viewport = viewport;
 school.init();
 
 messages.init();
-flockSync.init();
+schoolSync.init();
 
 animate.init();
 requestAnimationFrame(animate.update.bind(animate));

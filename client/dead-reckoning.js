@@ -4,6 +4,8 @@ module.exports = {
   zerothOrder: function(fish, serializedServerFish) {
     fish.x = serializedServerFish.x;
     fish.y = serializedServerFish.y;
+    fish.vx = serializedServerFish.vx;
+    fish.vy = serializedServerFish.vy;
     return fish;
   },
 

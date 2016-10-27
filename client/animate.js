@@ -1,5 +1,5 @@
 var viewport = require('./viewport');
-var flock = require('../shared/flock');
+var school = require('../shared/school');
 
 var boundingRect;
 var WIDTH;
@@ -17,7 +17,7 @@ module.exports = {
   },
 
   update: function() {
-    flock.tick();
+    school.tick();
 
     this.draw();
 
@@ -27,12 +27,12 @@ module.exports = {
   draw: function() {
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
     ctx.fillStyle = 'black';
-    flock
-      .boids()
-      .filter(viewport.containsBoid)
-      .map(viewport.toLocalCoords)
-      .forEach(function(boid) {
-        ctx.fillRect(boid[0], boid[1], 4, 4);
+    school
+      .all()
+      //.filter(viewport.containsBoid)
+      //.map(viewport.toLocalCoords)
+      .forEach(function(fish) {
+        ctx.fillRect(fish.x, fish.y, 4, 4);
       });
   },
 };

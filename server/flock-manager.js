@@ -1,4 +1,4 @@
-var flock = require('../shared/flock');
+var school = require('../shared/school');
 
 var UPDATE_INTERVAL = 1000;
 var TIME_STEP = 1000 / 60;
@@ -8,7 +8,7 @@ var client = null;
 
 module.exports = {
   init: function(fayeClient, width, height) {
-    flock.init(width, height);
+    school.init();
     client = fayeClient;
 
     setInterval(this.update, UPDATE_INTERVAL)
@@ -16,14 +16,14 @@ module.exports = {
 
   update: function() {
     for(var i = 0; i < TICKS_PER_UPDATE; i++) {
-      flock.tick();
+      school.tick();
     }
 
     // notify the press
     console.log(new Date(), 'Publishing latest flock positions');
     client.publish('/messages', {
       type: 'position',
-      boids: flock.boids()
+      school: school.serialize()
     });
   }
 };

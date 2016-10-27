@@ -1,5 +1,5 @@
 var viewport = require('./viewport');
-var flock = require('../shared/flock');
+var school = require('../shared/school');
 var messages = require('./messages');
 var flockSync = require('./flock-sync');
 var animate = require('./animate');
@@ -23,7 +23,7 @@ viewport.setElement(canvas);
 viewport.setBoundaries(0, screenLeft, HEIGHT, screenRight);
 window.viewport = viewport;
 
-flock.init(WIDTH, HEIGHT);
+school.init();
 
 messages.init();
 flockSync.init();

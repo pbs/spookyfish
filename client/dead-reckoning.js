@@ -6,27 +6,18 @@ module.exports = {
   },
 
   firstOrder: function(localBoid, actualBoid) {
-    return [
-      localBoid[0],
-      localBoid[1],
-      (actualBoid[0] - localBoid[0]) / dt + actualBoid[0],
-      (actualBoid[1] - localBoid[1]) / dt + actualBoid[1],
-      actualBoid[4],
-      actualBoid[5],
-    ];
+    var vx = (actualBoid[0] - localBoid[0]) / dt + actualBoid[0];
+    var vy = (actualBoid[1] - localBoid[1]) / dt + actualBoid[1];
+    localBoid[2] = vx;
+    localBoid[3] = vy;
+    return localBoid;
   },
 
   secondOrder: function(localBoid, actualBoid) {
     var ax = 2 / dt / dt * (actualBoid[0] - localBoid[0] + dt * (actualBoid[1] - localBoid[1]));
     var ay = 2 / dt / dt * (actualBoid[1] - localBoid[1] + dt * (actualBoid[1] - localBoid[1]));
-
-    return [
-      localBoid[0],
-      localBoid[1],
-      localBoid[2],
-      localBoid[3],
-      ax,
-      ay
-    ];
+    localBoid[4] = ax;
+    localBoid[5] = ay;
+    return localBoid;
   },
 };

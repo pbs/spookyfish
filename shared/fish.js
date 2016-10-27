@@ -26,6 +26,8 @@ var Fish = function(options) {
   this.individualRestingSpeed = Math.abs(this.vx);
   this.speedAfterTurn = 0;
   this.turnDirection = 0;
+  this.preferredDepth = this.y;
+  this.feeding = false;
   this.startled = false;
 };
 
@@ -42,6 +44,10 @@ Fish.prototype.update = function() {
 
   if(maybe(0.01)) {
     this.vy = rand(-3.0, 3.0);
+  }
+
+  if(Math.abs(this.preferredDepth - this.y) > 40 && !this.feeding) {
+    this.vy = Math.sign(this.preferredDepth - this.y) * rand(10, 15);
   }
 
   this.checkCollision();
@@ -113,13 +119,16 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   }
 
   if(closestIndex === -1) {
+    this.feeding = false;
     return;
   }
 
   if(closestXDistance < 20 && this.y < 20) {
+    this.feeding = false;
     return;
   }
 
+  this.feeding = true;
   var closestFeedPointX = feedPoints[closestIndex].x;
   var approachAngle = Math.atan2(-this.y, closestFeedPointX - this.x);
   var velocity = 50;

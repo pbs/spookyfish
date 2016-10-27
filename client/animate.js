@@ -33,10 +33,17 @@ module.exports = {
     renderer.resize(window.innerWidth, window.innerHeight);
     
     viewport.setElement(renderer.view);
-    viewport.setBoundaries(0, 0, window.innerWidth, window.innerHeight);
     
-//    var canvas = document.querySelector('canvas');
-    //ctx = canvas.getContext('2d');
+    // things
+    var screenPosition = Number(location.hash.substring(1))
+    if(isNaN(screenPosition)) {
+      screenPosition = 0;
+    }
+    var screenLeft = screenPosition * window.innerWidth/2;
+    var screenRight = screenLeft + window.innerWidth/2;
+
+    viewport.setBoundaries(0, screenLeft, window.innerHeight, screenRight);
+    window.viewport = viewport;    
 
     boundingRect = document.body.getBoundingClientRect();
     WIDTH = boundingRect.width;
@@ -80,6 +87,7 @@ module.exports = {
   draw: function() {
     //ctx.clearRect(0, 0, WIDTH, WIDTH);
     //ctx.fillStyle = 'black';
+
     flock
       .boids()
       .filter(viewport.containsBoid)
@@ -94,7 +102,7 @@ module.exports = {
         thisFish.vx = boid[4];
         thisFish.vy = boid[5];
       
-        //ctx.fillRect(boid[0], boid[1], 2, 2);
+        //ctx.fillRect(boid[0], boid[1], 4, 4);
       });
       
   },

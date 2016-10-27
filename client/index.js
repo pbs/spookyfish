@@ -14,10 +14,6 @@ var HEIGHT = boundingRect.height;
 //canvas.setAttribute('height', HEIGHT);
 
 flock.init(WIDTH, HEIGHT);
-flock.addAttractor(250, 250, 50, 0.25);
-for(var i = 0; i < WIDTH; i += 10) {
-  flock.addRepeller(i, WIDTH, WIDTH * 0.01, 10);
-}
 
 messages.init();
 flockSync.init();

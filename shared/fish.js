@@ -32,6 +32,16 @@ Fish.prototype.update = function() {
   this.x += this.vx * dt;
   this.y += this.vy * dt; 
 
+  this.doTurn();
+
+  if(Math.random() < 0.1) {
+    this.vy = rand(-0.5, 0.5);
+  }
+
+  this.checkCollision();
+}
+
+Fish.prototype.doTurn = function() {
   if(this.turnDirection === 0 && Math.random() < 0.01) {
     this.turnDirection = -Math.sign(this.vx);
     this.speedAfterTurn = -this.vx;
@@ -48,11 +58,9 @@ Fish.prototype.update = function() {
   } else if(this.turnDirection === 1 && this.vx >= this.speedAfterTurn) {
     this.turnDirection = 0;
   }
+};
 
-  if(Math.random() < 0.1) {
-    this.vy = rand(-0.5, 0.5);
-  }
-
+Fish.prototype.checkCollision = function() {
   // Wall collision
   if(this.x < SCHOOL_MIN_X) {
     this.x = SCHOOL_MIN_X;
@@ -69,7 +77,7 @@ Fish.prototype.update = function() {
     this.y = SCHOOL_MAX_Y;
     this.vy = -Math.abs(this.vy);
   }
-}
+};
 
 Fish.prototype.serialize = function() {
   return {

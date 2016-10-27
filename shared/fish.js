@@ -13,7 +13,10 @@ var Fish = function(options) {
   this.id = Math.floor(Math.random() * 100000);
   this.x = rand(SCHOOL_MIN_X, SCHOOL_MAX_X);
   this.y = rand(SCHOOL_MIN_Y, SCHOOL_MAX_Y);
-  this.vx = this.options.restingSpeed;
+  this.vx = this.options.restingSpeed * rand(0.9, 1.1);
+  if(Math.random() < 0.5) {
+    this.vx *= -1;
+  }
   this.vy = rand(-0.5, 0.5);
   this.startled = 0;
 };
@@ -35,6 +38,9 @@ Fish.prototype.update = function() {
   this.vx = speed * Math.cos(theta);
   this.vy = speed * Math.sin(theta);
  */
+  if(Math.random() < 0.001) {
+    this.vx *= -1;
+  }
   if(Math.random() < 0.1) {
     this.vy = rand(-0.5, 0.5);
   }

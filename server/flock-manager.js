@@ -22,6 +22,7 @@ module.exports = {
     // notify the press
     console.log(new Date(), 'Publishing latest flock positions');
     client.publish('/messages', {
+      type: 'position',
       boids: flock.boids()
     });
   }

@@ -83,6 +83,10 @@ var neverSynced = true;
 module.exports = {
   init: function() {
     messages.subscribe(function(data) {
+      if(data.type !== 'position') {
+        return;
+      }
+
       this.receiveVisibleFlockUpdate(data.boids);
     }.bind(this));
   },

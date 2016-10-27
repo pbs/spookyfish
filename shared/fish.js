@@ -21,7 +21,7 @@ var Fish = function(options) {
   if(maybe(0.5)) {
     this.vx *= -1;
   }
-  this.vy = rand(-0.5, 0.5);
+  this.vy = rand(-3.0, 3.0);
 
   this.individualRestingSpeed = Math.abs(this.vx);
   this.speedAfterTurn = 0;
@@ -40,8 +40,8 @@ Fish.prototype.update = function() {
 
   this.doMiniStartle();
 
-  if(maybe(0.1)) {
-    this.vy = rand(-0.5, 0.5);
+  if(maybe(0.01)) {
+    this.vy = rand(-3.0, 3.0);
   }
 
   this.checkCollision();

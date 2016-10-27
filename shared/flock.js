@@ -2,15 +2,15 @@ var boids = require('boids');
 
 var flock = null;
 var FLOCK_MIN_X = 0;
-var FLOCK_MAX_X = 100;
+var FLOCK_MAX_X = 500;
 var FLOCK_MIN_Y = 0;
-var FLOCK_MAX_Y = 100;
+var FLOCK_MAX_Y = 500;
 
 module.exports = {
   init: function(width, height) {
     flock = boids({
       boids: 100,              // The amount of boids to use 
-      speedLimit: 1,          // Max steps to take per tick 
+      speedLimit: 0.5,          // Max steps to take per tick 
       accelerationLimit: 0.2,   // Max acceleration per tick 
       separationDistance: 60, // Radius at which boids avoid others 
       alignmentDistance: 500, // Radius at which boids align with others 

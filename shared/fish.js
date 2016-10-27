@@ -15,8 +15,14 @@ var Fish = function(options) {
   this.options = options;
 
   this.id = Math.floor(Math.random() * 100000);
-  this.x = rand(SCHOOL_MIN_X, SCHOOL_MAX_X);
-  this.y = rand(SCHOOL_MIN_Y, SCHOOL_MAX_Y);
+  
+  this.minX = this.options.minX; 
+  this.minY = this.options.minY;
+  this.maxX = this.options.maxX;
+  this.maxY = this.options.maxY;
+  
+  this.x = rand(this.minX, this.maxX);
+  this.y = rand(this.minY, this.maxY);
   this.vx = this.options.restingSpeed * rand(0.9, 1.1);
   if(maybe(0.5)) {
     this.vx *= -1;
@@ -36,7 +42,7 @@ Fish.prototype.update = function() {
 
   // basic motion
   this.x += this.vx * dt;
-  this.y += this.vy * dt; 
+  this.y += this.vy * dt;   
 
   this.doTurn();
 
@@ -90,19 +96,19 @@ Fish.prototype.doTurn = function() {
 
 Fish.prototype.checkCollision = function() {
   // Wall collision
-  if(this.x < SCHOOL_MIN_X) {
-    this.x = SCHOOL_MIN_X;
+  if(this.x < this.minX) {
+    this.x = this.minX;
     this.vx = Math.abs(this.vx);
-  } else if(this.x > SCHOOL_MAX_X) {
-    this.x = SCHOOL_MAX_X;
+  } else if(this.x > this.maxX) {
+    this.x = this.maxX;
     this.vx = -Math.abs(this.vx);
   }
   
-  if(this.y < SCHOOL_MIN_Y) {
-    this.y = SCHOOL_MIN_Y;
+  if(this.y < this.minY) {
+    this.y = this.minY;
     this.vy = Math.abs(this.vy);
-  } else if(this.y > SCHOOL_MAX_Y) {
-    this.y = SCHOOL_MAX_Y;
+  } else if(this.y > this.maxY) {
+    this.y = this.maxY;
     this.vy = -Math.abs(this.vy);
   }
 };

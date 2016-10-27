@@ -24,7 +24,7 @@ module.exports = {
   
   init: function() {
     // Setup the renderer
-    renderer = new PIXI.autoDetectRenderer(WIDTH, HEIGHT);
+    renderer = new PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.view);
 
     stage = new PIXI.Container();
@@ -46,12 +46,12 @@ module.exports = {
     var screenRight = screenLeft + window.innerWidth/2;
 
     viewport.setBoundaries(0, screenLeft, window.innerHeight, screenRight);
-    window.viewport = viewport;    
+    window.viewport = viewport;
 
     boundingRect = document.body.getBoundingClientRect();
     WIDTH = boundingRect.width;
     HEIGHT = boundingRect.height;
-    
+        
     school.all().forEach(function(fish, index){
       var randomFish = fishImages[Math.floor(Math.random() * fishImages.length)];
       var randomScale = Math.floor(Math.random() * (5 - 2) - 2 ) / 5;

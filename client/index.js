@@ -14,6 +14,7 @@ var HEIGHT = boundingRect.height;
 //canvas.setAttribute('width', WIDTH);
 //canvas.setAttribute('height', HEIGHT);
 
+
 school.init();
 
 messages.init();

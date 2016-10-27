@@ -31,14 +31,18 @@ module.exports = {
 
     flock.boids.forEach(function(boid) {
       if(boid[0] < FLOCK_MIN_X) {
+        boid[0] = FLOCK_MIN_X;
         boid[2] = 10;
       } else if(boid[0] > FLOCK_MAX_X) {
+        boid[0] = FLOCK_MAX_X;
         boid[2] = -10;
       }
 
       if(boid[1] < FLOCK_MIN_Y) {
+        boid[1] = FLOCK_MIN_Y;
         boid[3] = 10;
       } else if(boid[1] > FLOCK_MAX_Y) {
+        boid[1] = FLOCK_MAX_Y;
         boid[3] = -10;
       }
     });

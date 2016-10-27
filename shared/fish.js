@@ -13,8 +13,8 @@ var Fish = function(options) {
   this.id = Math.floor(Math.random() * 100000);
   this.x = rand(SCHOOL_MIN_X, SCHOOL_MAX_X);
   this.y = rand(SCHOOL_MIN_Y, SCHOOL_MAX_Y);
-  this.vx = 1;
-  this.vy = 0;
+  this.vx = this.options.restingSpeed;
+  this.vy = (Math.random() * 0.5) - 1;
   this.startled = 0;
 };
 
@@ -35,10 +35,19 @@ Fish.prototype.update = function() {
     console.log('Startled', this.id);
   }
 
+  /*
   var speed = this.startled * (this.options.startledSpeed - this.options.restingSpeed) + this.options.restingSpeed;
   var theta = Math.atan2(this.vy, this.vx);
+  if(Math.random() < 0.5) {
+    var turn = 0.2;
+    theta += Math.random() * 2 * turn - turn;
+  }
   this.vx = speed * Math.cos(theta);
   this.vy = speed * Math.sin(theta);
+ */
+  if(Math.random() < 0.1) {
+    this.vy = (Math.random() * 0.5) - 1;
+  }
 
   // Wall collision
   if(this.x < SCHOOL_MIN_X) {

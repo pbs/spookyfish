@@ -1,6 +1,10 @@
 var boids = require('boids');
 
 var flock = null;
+var FLOCK_MIN_X = 0;
+var FLOCK_MAX_X = 100;
+var FLOCK_MIN_Y = 0;
+var FLOCK_MAX_Y = 100;
 
 module.exports = {
   init: function(width, height) {
@@ -24,6 +28,20 @@ module.exports = {
 
   tick: function() {
     flock.tick();
+
+    flock.boids.forEach(function(boid) {
+      if(boid[0] < FLOCK_MIN_X) {
+        boid[2] = 10;
+      } else if(boid[0] > FLOCK_MAX_X) {
+        boid[2] = -10;
+      }
+
+      if(boid[1] < FLOCK_MIN_Y) {
+        boid[3] = 10;
+      } else if(boid[1] > FLOCK_MAX_Y) {
+        boid[3] = -10;
+      }
+    });
   },
 
   boids: function() {

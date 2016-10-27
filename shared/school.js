@@ -28,10 +28,10 @@ module.exports = {
     return school[i];
   },
 
-  addFeedPoint: function(x) {
+  addFeedPoint: function(x, age) {
     feedPoints.push({
       x: x,
-      age: 60 * 5
+      age: age || 60 * 5
     });
   },
 

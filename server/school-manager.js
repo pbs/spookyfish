@@ -20,7 +20,7 @@ module.exports = {
     }
 
     // notify the press
-    console.log(new Date(), 'Publishing latest flock positions');
+    console.log(new Date(), 'Publishing latest school positions');
     client.publish('/messages', {
       type: 'position',
       school: school.serialize()

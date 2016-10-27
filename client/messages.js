@@ -15,5 +15,9 @@ module.exports = {
 
   subscribe: function(action) {
     subscribers.push(action);
+  },
+
+  publish: function(data) {
+    client.publish('/messages', data);
   }
 };

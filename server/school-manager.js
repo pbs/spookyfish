@@ -11,6 +11,8 @@ module.exports = {
     school.init();
     client = fayeClient;
 
+    client.subscribe('/messages', this.onReceiveFeedPoint);
+
     setInterval(this.update, UPDATE_INTERVAL)
   },
 
@@ -25,5 +27,13 @@ module.exports = {
       type: 'position',
       school: school.serialize()
     });
+  },
+
+  onReceiveFeedPoint: function(data) {
+    if(data.type !== 'feedPoint') {
+      return;
+    }
+
+    school.addFeedPoint(data.x);
   }
 };

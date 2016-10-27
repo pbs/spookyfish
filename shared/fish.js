@@ -28,16 +28,6 @@ Fish.prototype.update = function() {
   this.x += this.vx * dt;
   this.y += this.vy * dt; 
 
-  /*
-  var speed = this.startled * (this.options.startledSpeed - this.options.restingSpeed) + this.options.restingSpeed;
-  var theta = Math.atan2(this.vy, this.vx);
-  if(Math.random() < 0.5) {
-    var turn = 0.2;
-    theta += Math.random() * 2 * turn - turn;
-  }
-  this.vx = speed * Math.cos(theta);
-  this.vy = speed * Math.sin(theta);
- */
   if(Math.random() < 0.001) {
     this.vx *= -1;
   }

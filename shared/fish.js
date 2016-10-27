@@ -19,10 +19,10 @@ var Fish = function(options) {
   }
   this.vy = rand(-0.5, 0.5);
 
+  this.individualRestingSpeed = Math.abs(this.vx);
   this.speedAfterTurn = 0;
   this.turnDirection = 0;
-
-  this.startled = 0;
+  this.startled = false;
 };
 
 Fish.prototype.update = function() {
@@ -34,12 +34,30 @@ Fish.prototype.update = function() {
 
   this.doTurn();
 
+  this.doMiniStartle();
+
   if(Math.random() < 0.1) {
     this.vy = rand(-0.5, 0.5);
   }
 
   this.checkCollision();
 }
+
+Fish.prototype.doMiniStartle = function() {
+  if(!this.startled && Math.random() < 0.001) {
+    this.startled = true;
+    this.vx *= rand(2, 3);
+  }
+  
+  if(Math.abs(this.vx) > this.individualRestingSpeed) {
+    this.vx *= 0.99;
+  }
+
+  if(Math.abs(this.vx) < this.individualRestingSpeed) {
+    this.startled = false;
+    this.vx = Math.sign(this.vx) * this.individualRestingSpeed;
+  }
+};
 
 Fish.prototype.doTurn = function() {
   if(this.turnDirection === 0 && Math.random() < 0.001) {

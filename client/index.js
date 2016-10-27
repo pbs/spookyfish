@@ -3,6 +3,7 @@ var school = require('../shared/school');
 var messages = require('./messages');
 var schoolSync = require('./school-sync');
 var animate = require('./animate');
+var interaction = require('./interaction');
 //var PIXI = require('pixi.js');
 
 var boundingRect = document.body.getBoundingClientRect();
@@ -17,6 +18,7 @@ school.init();
 
 messages.init();
 schoolSync.init();
-
-animate.load();
+animate.load(function() {
+  interaction.init();
+});
 //requestAnimationFrame(animate.update.bind(animate));

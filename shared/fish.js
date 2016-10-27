@@ -117,10 +117,10 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   }
 
   var closestFeedPointX = feedPoints[closestIndex].x;
-  var approachAngle = Math.atan2(this.y, closestFeedPointX - this.x);
-  var velocity = 30;
+  var approachAngle = Math.atan2(-this.y, closestFeedPointX - this.x);
+  var velocity = 50;
   this.vx = velocity * Math.cos(approachAngle);
-  this.vx = velocity * Math.sin(approachAngle);
+  this.vy = velocity * Math.sin(approachAngle);
 };
 
 Fish.prototype.serialize = function() {

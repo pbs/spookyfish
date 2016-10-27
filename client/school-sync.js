@@ -19,10 +19,13 @@ module.exports = {
   receiveVisibleSchoolUpdate: function(newFish) {
     var totalDistanceError = 0;
     for(var i = 0; i < newFish.length; i++) {
+      // copy hidden fields
+      school.get(i).startled = newFish[i].startled;
+
       if(neverSynced) {
         deadReckoning.zerothOrder(school.get(i), newFish[i]);
       } else {
-      //  deadReckoning.firstOrder(school.get(i), newFish[i]);
+        //deadReckoning.firstOrder(school.get(i), newFish[i]);
       }
     }
 

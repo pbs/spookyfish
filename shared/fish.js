@@ -63,7 +63,8 @@ Fish.prototype.serialize = function() {
     x: this.x,
     y: this.y,
     vx: this.vx,
-    vy: this.vy
+    vy: this.vy,
+    startled: this.startled
   };
 };
 

@@ -2,7 +2,13 @@ var dt = 1 / 60;
 
 module.exports = {
   zerothOrder: function(localBoid, actualBoid) {
-    return actualBoid;
+    localBoid[0] = actualBoid[0];
+    localBoid[1] = actualBoid[1];
+    localBoid[2] = actualBoid[2];
+    localBoid[3] = actualBoid[3];
+    localBoid[4] = actualBoid[4];
+    localBoid[5] = actualBoid[5];
+    return localBoid;
   },
 
   firstOrder: function(localBoid, actualBoid) {

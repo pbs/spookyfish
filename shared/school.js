@@ -6,7 +6,10 @@ module.exports = {
   init: function() {
     school = [];
     for(var i = 0; i < 20; i++) {
-      school.push(new Fish({}));
+      school.push(new Fish({
+        restingSpeed: 2.5,
+        startledSpeed: 50
+      }));
     }
   },
 

@@ -20,7 +20,7 @@ module.exports = {
     var totalDistanceError = 0;
     for(var i = 0; i < newFish.length; i++) {
       //if(neverSynced) {
-        deadReckoning.zerothOrder(school.get(i), newFish[i]);
+      //  deadReckoning.zerothOrder(school.get(i), newFish[i]);
       //} else {
       //  deadReckoning.firstOrder(school.get(i), newFish[i]);
       //}

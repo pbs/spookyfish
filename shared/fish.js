@@ -8,10 +8,14 @@ var rand = function(a, b) {
 }
 
 var Fish = function(options) {
+  this.options = options;
+
+  this.id = Math.floor(Math.random() * 100000);
   this.x = rand(SCHOOL_MIN_X, SCHOOL_MAX_X);
   this.y = rand(SCHOOL_MIN_Y, SCHOOL_MAX_Y);
   this.vx = 1;
   this.vy = 0;
+  this.startled = 0;
 };
 
 Fish.prototype.update = function() {
@@ -21,7 +25,20 @@ Fish.prototype.update = function() {
   this.x += this.vx * dt;
   this.y += this.vy * dt; 
 
-  this.vy += Math.random() * dt;
+  // startled updates
+  if(this.startled > 0) {
+    this.startled -= 0.1 * dt;
+    this.startled = Math.max(this.startled, 0);
+  }
+  if(Math.random() < 0.001) {
+    this.startled = 1;
+    console.log('Startled', this.id);
+  }
+
+  var speed = this.startled * (this.options.startledSpeed - this.options.restingSpeed) + this.options.restingSpeed;
+  var theta = Math.atan2(this.vy, this.vx);
+  this.vx = speed * Math.cos(theta);
+  this.vy = speed * Math.sin(theta);
 
   // Wall collision
   if(this.x < SCHOOL_MIN_X) {

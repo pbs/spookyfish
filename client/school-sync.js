@@ -12,32 +12,20 @@ module.exports = {
         return;
       }
 
-      this.receiveVisibleSchoolUpdate(data.boids);
+      this.receiveVisibleSchoolUpdate(data.school);
     }.bind(this));
   },
 
-  receiveVisibleSchoolUpdate: function(newBoids) {
-    return;
+  receiveVisibleSchoolUpdate: function(newFish) {
     var totalDistanceError = 0;
-    for(var i = 0; i < newBoids.length; i++) {
-      var dx = school.get(i).x - newBoids[i].x;
-      var dy = school.get(i).y - newBoids[i].x;
-
-      var distanceError = Math.sqrt(dx * dx + dy * dy);
-      totalDistanceError += distanceError;
-
-      /*
-       * // Figure this out...
-      if(neverSynced || distanceError > 50) {
-        school.boids()[i] = deadReckoning.zerothOrder(school.boids()[i], newBoids[i]);
-      } else {
-        school.boids()[i] = deadReckoning.secondOrder(school.boids()[i], newBoids[i]);
-      }
-     */
+    for(var i = 0; i < newFish.length; i++) {
+      //if(neverSynced) {
+        deadReckoning.zerothOrder(school.get(i), newFish[i]);
+      //} else {
+      //  deadReckoning.firstOrder(school.get(i), newFish[i]);
+      //}
     }
 
     neverSynced = false;
-
-    console.log('Average position error:', totalDistanceError / newBoids.length);
   }
 };

@@ -42,7 +42,7 @@ Fish.prototype.update = function() {
 }
 
 Fish.prototype.doTurn = function() {
-  if(this.turnDirection === 0 && Math.random() < 0.01) {
+  if(this.turnDirection === 0 && Math.random() < 0.001) {
     this.turnDirection = -Math.sign(this.vx);
     this.speedAfterTurn = -this.vx;
   }

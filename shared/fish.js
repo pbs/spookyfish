@@ -103,16 +103,20 @@ Fish.prototype.checkCollision = function() {
 
 Fish.prototype.approachFeedPoints = function(feedPoints) {
   var closestIndex = -1;
-  var closestDistance = Infinity;
+  var closestXDistance = Infinity;
   for(var i = 0; i < feedPoints.length; i++) {
     var distance = Math.abs(feedPoints[i].x - this.x);
-    if(distance < closestDistance) {
-      closestDistance = distance;
+    if(distance < closestXDistance) {
+      closestXDistance = distance;
       closestIndex = i;
     }
   }
 
   if(closestIndex === -1) {
+    return;
+  }
+
+  if(closestXDistance < 20 && this.y < 20) {
     return;
   }
 

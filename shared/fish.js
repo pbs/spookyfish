@@ -25,16 +25,6 @@ Fish.prototype.update = function() {
   this.x += this.vx * dt;
   this.y += this.vy * dt; 
 
-  // startled updates
-  if(this.startled > 0) {
-    this.startled -= 0.1 * dt;
-    this.startled = Math.max(this.startled, 0);
-  }
-  if(Math.random() < 0.001) {
-    this.startled = 1;
-    console.log('Startled', this.id);
-  }
-
   /*
   var speed = this.startled * (this.options.startledSpeed - this.options.restingSpeed) + this.options.restingSpeed;
   var theta = Math.atan2(this.vy, this.vx);

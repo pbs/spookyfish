@@ -7,6 +7,10 @@ var rand = function(a, b) {
   return Math.random() * (b - a) + a;
 }
 
+var maybe = function(p) {
+  return Math.random() <= p;
+}
+
 var Fish = function(options) {
   this.options = options;
 
@@ -14,7 +18,7 @@ var Fish = function(options) {
   this.x = rand(SCHOOL_MIN_X, SCHOOL_MAX_X);
   this.y = rand(SCHOOL_MIN_Y, SCHOOL_MAX_Y);
   this.vx = this.options.restingSpeed * rand(0.9, 1.1);
-  if(Math.random() < 0.5) {
+  if(maybe(0.5)) {
     this.vx *= -1;
   }
   this.vy = rand(-0.5, 0.5);
@@ -36,7 +40,7 @@ Fish.prototype.update = function() {
 
   this.doMiniStartle();
 
-  if(Math.random() < 0.1) {
+  if(maybe(0.1)) {
     this.vy = rand(-0.5, 0.5);
   }
 
@@ -44,7 +48,7 @@ Fish.prototype.update = function() {
 }
 
 Fish.prototype.doMiniStartle = function() {
-  if(!this.startled && Math.random() < 0.001) {
+  if(!this.startled && maybe(0.001)) {
     this.startled = true;
     this.vx *= rand(2, 3);
   }
@@ -60,7 +64,7 @@ Fish.prototype.doMiniStartle = function() {
 };
 
 Fish.prototype.doTurn = function() {
-  if(this.turnDirection === 0 && Math.random() < 0.001) {
+  if(this.turnDirection === 0 && maybe(0.001)) {
     this.turnDirection = -Math.sign(this.vx);
     this.speedAfterTurn = -this.vx;
   }

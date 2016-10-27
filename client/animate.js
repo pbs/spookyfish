@@ -90,20 +90,16 @@ module.exports = {
 
     flock
       .boids()
-      .filter(viewport.containsBoid)
-      .map(viewport.toLocalCoords)
+ //     .filter(viewport.containsBoid)
+ //     .map(viewport.toLocalCoords)
       .forEach(function(boid, index) {
         var thisFish = boid[boid.length-1];
-        console.log(thisFish);
         
         //boid = [x, y, w, h, vx, vy ]
         thisFish.x = boid[0];
         thisFish.y = boid[1];
-        thisFish.vx = boid[4];
-        thisFish.vy = boid[5];
       
         //ctx.fillRect(boid[0], boid[1], 4, 4);
       });
-      
   },
 };

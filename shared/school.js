@@ -1,6 +1,7 @@
 var Fish = require('./fish');
 
 var school = null;
+var feedPoints = [];
 
 module.exports = {
   init: function() {
@@ -27,9 +28,23 @@ module.exports = {
     return school[i];
   },
 
-  serialize: function() {
-    return school.map(function(fish) {
-      return fish.serialize();
+  addFeedPoint: function(x) {
+    feedPoints.push({
+      x: x,
+      age: 60 * 5
     });
+  },
+
+  setFeedPoints: function(newFeedPoints) {
+    feedPoints = newFeedPoints;
+  },
+
+  serialize: function() {
+    return {
+      feedPoints: feedPoints,
+      fish: school.map(function(fish) {
+        return fish.serialize();
+      })
+    };
   }
 };

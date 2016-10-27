@@ -18,6 +18,10 @@ var Fish = function(options) {
     this.vx *= -1;
   }
   this.vy = rand(-0.5, 0.5);
+
+  this.speedAfterTurn = 0;
+  this.turnDirection = 0;
+
   this.startled = 0;
 };
 
@@ -28,9 +32,23 @@ Fish.prototype.update = function() {
   this.x += this.vx * dt;
   this.y += this.vy * dt; 
 
-  if(Math.random() < 0.001) {
-    this.vx *= -1;
+  if(this.turnDirection === 0 && Math.random() < 0.01) {
+    this.turnDirection = -Math.sign(this.vx);
+    this.speedAfterTurn = -this.vx;
   }
+
+  if(this.turnDirection === -1 && this.vx > this.speedAfterTurn) {
+    this.vx -= 1;
+  } else if(this.turnDirection === 1 && this.vx < this.speedAfterTurn) {
+    this.vx += 1;
+  }
+
+  if(this.turnDirection === -1 && this.vx <= this.speedAfterTurn) {
+    this.turnDirection = 0;
+  } else if(this.turnDirection === 1 && this.vx >= this.speedAfterTurn) {
+    this.turnDirection = 0;
+  }
+
   if(Math.random() < 0.1) {
     this.vy = rand(-0.5, 0.5);
   }

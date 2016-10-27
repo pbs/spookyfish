@@ -23,11 +23,11 @@ module.exports = {
       // copy hidden fields
       school.get(i).startled = newFish[i].startled;
 
-      if(neverSynced) {
+      //if(neverSynced) {
         deadReckoning.zerothOrder(school.get(i), newFish[i]);
-      } else {
-        //deadReckoning.firstOrder(school.get(i), newFish[i]);
-      }
+      //} else {
+      //  deadReckoning.firstOrder(school.get(i), newFish[i]);
+      //}
     }
 
     neverSynced = false;

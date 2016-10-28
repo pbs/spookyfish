@@ -57,6 +57,20 @@ var Fish = function(options) {
   this.startled = false;
 };
 
+// The list of fields that we want to share between the server and the client
+Fish.serializableFields = [
+  'x',
+  'y',
+  'vx',
+  'vy',
+  'individualRestingSpeed',
+  'speedAfterTurn',
+  'turnDirection',
+  'preferredDepth',
+  'feeding',
+  'startled'
+];
+
 Fish.prototype.update = function() {
   var dt = 1 / 60;
 
@@ -179,13 +193,23 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
 
 // handy serialization method for socket communication
 Fish.prototype.serialize = function() {
-  return {
-    x: this.x,
-    y: this.y,
-    vx: this.vx,
-    vy: this.vy,
-    startled: this.startled
-  };
+  var serialized = {};
+  Fish.serializableFields.forEach(function(fieldName) {
+    serialize[fieldName] = this[fieldName];
+  }.bind(this));
+  return serialized;
+};
+
+// takes raw server data and updates this fish with the data. Importantly, we ignore position/velocity stuff because
+// we want dead reckoning to smooth that out for us
+Fish.prototype.deserializeExtraFields = function(serverData) {
+  Fish.serializableFields.forEach(function(fieldName) {
+    if(fieldName == 'x' || fieldName == 'y' || fieldName == 'vx' || fieldName == 'vy') {
+      return
+    }
+
+    this[fieldName] = serverData[fieldName];
+  }.bind(this)); 
 };
 
 module.exports = Fish;

@@ -24,8 +24,7 @@ module.exports = {
   receiveVisibleSchoolUpdate: function(newFish) {
     // for each of the fish, apply some dead reckoning algorithm to make the fish line up
     for(var i = 0; i < newFish.length; i++) {
-      // copy hidden fields
-      school.get(i).startled = newFish[i].startled;
+      school.get(i).deserializeExtraFields(newFish[i]);     
 
       if(neverSynced) {
         deadReckoning.zerothOrder(school.get(i), newFish[i]);

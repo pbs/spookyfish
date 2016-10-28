@@ -95,7 +95,7 @@ Fish.prototype.doMiniStartle = function() {
   // If we're not already startled, we might just become startled
   if(!this.startled && maybe(0.001)) {
     this.startled = true;
-    this.vx *= rand(2, 3);
+    this.vx = config.FISH_STARTLE_SPEED * rand(0.9, 1.1);
   }
   
   // if we're still above our resting speed, slowly reduce it until we're back at our normal speed

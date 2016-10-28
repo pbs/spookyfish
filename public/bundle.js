@@ -166,6 +166,7 @@ animate.load(function() {
 
 },{"../shared/school":48,"./animate":1,"./interaction":4,"./messages":5,"./school-sync":6,"./viewport":7}],4:[function(require,module,exports){
 var school = require('../shared/school');
+var viewport = require('./viewport');
 var messages = require('./messages');
 
 module.exports = {
@@ -174,17 +175,22 @@ module.exports = {
   },
 
   onClick: function(evt) {
-    school.addFeedPoint(evt.clientX);
+    var globalCoords = viewport.toGlobalCoords({
+      x: evt.clientX,
+      y: evt.clientY
+    });
+    
+    school.addFeedPoint(globalCoords.x);
 
     // now publish to the server
     messages.publish({
       type: 'feedPoint',
-      x: evt.clientX
+      x: globalCoords.x
     });
   },
 };
 
-},{"../shared/school":48,"./messages":5}],5:[function(require,module,exports){
+},{"../shared/school":48,"./messages":5,"./viewport":7}],5:[function(require,module,exports){
 var faye = require('faye');
 
 var client;
@@ -290,6 +296,13 @@ module.exports = {
         y: (fish.y - top) / viewportHeight * elementHeight
       }
     }
+  },
+
+  toGlobalCoords: function(point) {
+    return {
+      x: point.x / window.innerWidth * viewportWidth + left,
+      y: point.y / window.innerHeight * viewportHeight + top
+    };
   }
 };
 
@@ -3343,10 +3356,17 @@ process.umask = function() { return 0; };
 
 },{}],46:[function(require,module,exports){
 module.exports = {
-  WORLD_MAX_X: 1000,
+  //WORLD_MAX_X: 1000,
+  WORLD_MAX_X: 100,
   WORLD_MAX_Y: 100,
   WINDOW_DEFAULT_WIDTH: 100,
-  WINDOW_DEFAULT_HEIGHT: 100
+  WINDOW_DEFAULT_HEIGHT: 100,
+  FISH_COUNT: 20,
+  FISH_RESTING_SPEED: 5,
+  FISH_STARTLE_SPEED: 50,
+  FISH_FOOD_APPROACH_SPEED: 30,
+  FISH_FOOD_X_OVERSHOOT: 5,
+  FISH_FOOD_Y_OVERSHOOT: 5
 };
 
 },{}],47:[function(require,module,exports){
@@ -3373,7 +3393,7 @@ var Fish = function(options) {
   this.y = rand(0, config.WORLD_MAX_Y);
 
   // the direction the fish is moving, could be left or right
-  this.vx = this.options.restingSpeed * rand(0.9, 1.1);
+  this.vx = config.FISH_RESTING_SPEED * rand(0.9, 1.1);
   if(maybe(0.5)) {
     this.vx *= -1;
   }
@@ -3447,7 +3467,7 @@ Fish.prototype.doMiniStartle = function() {
   // If we're not already startled, we might just become startled
   if(!this.startled && maybe(0.001)) {
     this.startled = true;
-    this.vx *= rand(2, 3);
+    this.vx = config.FISH_STARTLE_SPEED * rand(0.9, 1.1);
   }
   
   // if we're still above our resting speed, slowly reduce it until we're back at our normal speed
@@ -3524,7 +3544,8 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   }
 
   // if we're pretty close, don't attempt to turn so the fish overshoots a little, making it look more realistic
-  if(closestXDistance < 20 && this.y < 20) {
+  var totalFoodDistance = Math.sqrt(closestXDistance * closestXDistance + this.y * this.y);
+  if(this.y < config.FISH_FOOD_Y_OVERSHOOT || closestXDistance < config.FISH_FOOD_X_OVERSHOOT) {
     this.feeding = false;
     return;
   }
@@ -3534,7 +3555,7 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   this.feeding = true;
   var closestFeedPointX = feedPoints[closestIndex].x;
   var approachAngle = Math.atan2(-this.y, closestFeedPointX - this.x);
-  var velocity = 10;
+  var velocity = config.FISH_FOOD_APPROACH_SPEED;
   this.vx = velocity * Math.cos(approachAngle);
   this.vy = velocity * Math.sin(approachAngle);
 };
@@ -3563,6 +3584,7 @@ Fish.prototype.deserializeExtraFields = function(serverData) {
 module.exports = Fish;
 
 },{"./config":46}],48:[function(require,module,exports){
+var config = require('./config');
 var Fish = require('./fish');
 
 var school = null;
@@ -3573,15 +3595,8 @@ module.exports = {
   init: function() {
     school = [];
     feedPoints = [];
-    for(var i = 0; i < 20; i++) {
-      school.push(new Fish({
-        restingSpeed: 50,
-        startledSpeed: 50,
-        minX: 0,
-        minY: 0,
-        maxX: 1000,
-        maxY: 1000
-      }));
+    for(var i = 0; i < config.FISH_COUNT; i++) {
+      school.push(new Fish());
     }
   },
 
@@ -3641,4 +3656,4 @@ module.exports = {
   }
 };
 
-},{"./fish":47}]},{},[3]);
+},{"./config":46,"./fish":47}]},{},[3]);

@@ -41,6 +41,13 @@ module.exports = {
     return school[i];
   },
 
+  // gets a single school member by its ID
+  getById: function(id) {
+    return school.find(function (fish) {
+      return fish.id = id;
+    });
+  },
+
   // adds a new feeding point
   addFeedPoint: function(x, age) {
     feedPoints.push({

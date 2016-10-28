@@ -166,6 +166,7 @@ animate.load(function() {
 
 },{"../shared/school":48,"./animate":1,"./interaction":4,"./messages":5,"./school-sync":6,"./viewport":7}],4:[function(require,module,exports){
 var school = require('../shared/school');
+var viewport = require('./viewport');
 var messages = require('./messages');
 
 module.exports = {
@@ -174,17 +175,22 @@ module.exports = {
   },
 
   onClick: function(evt) {
-    school.addFeedPoint(evt.clientX);
+    var globalCoords = viewport.toGlobalCoords({
+      x: evt.clientX,
+      y: evt.clientY
+    });
+    
+    school.addFeedPoint(globalCoords.x);
 
     // now publish to the server
     messages.publish({
       type: 'feedPoint',
-      x: evt.clientX
+      x: globalCoords.x
     });
   },
 };
 
-},{"../shared/school":48,"./messages":5}],5:[function(require,module,exports){
+},{"../shared/school":48,"./messages":5,"./viewport":7}],5:[function(require,module,exports){
 var faye = require('faye');
 
 var client;
@@ -223,28 +229,22 @@ var neverSynced = true;
 module.exports = {
   init: function() {
     messages.subscribe(function(data) {
-      if(data.type !== 'position') {
-        return;
-      }
-    
       // when a message is received, reset feed points to match what the server has, and then attempt to fix fish
       // positions
-      school.setFeedPoints(data.school.feedPoints);
-      this.receiveVisibleSchoolUpdate(data.school.fish);
+      if (data.type === 'feedPoint') {
+        school.setFeedPoints([data.x]);
+      }
+
+      // when a fish has crossed the boundary between screens, update its position
+      if (data.type === 'clientPosition') {
+        this.receiveVisibleSchoolUpdate(data.fish);
+      }
     }.bind(this));
   },
 
   receiveVisibleSchoolUpdate: function(newFish) {
-    // for each of the fish, apply some dead reckoning algorithm to make the fish line up
-    for(var i = 0; i < newFish.length; i++) {
-      school.get(i).deserializeExtraFields(newFish[i]);     
-
-      //if(neverSynced) {
-        deadReckoning.zerothOrder(school.get(i), newFish[i]);
-      //} else {
-      //  deadReckoning.firstOrder(school.get(i), newFish[i]);
-      //}
-    }
+    school.getById(newFish.id).deserializeExtraFields(newFish);
+    //deadReckoning.zerothOrder(school.getById(newFish.id), newFish);
 
     neverSynced = false;
   }
@@ -290,6 +290,13 @@ module.exports = {
         y: (fish.y - top) / viewportHeight * elementHeight
       }
     }
+  },
+
+  toGlobalCoords: function(point) {
+    return {
+      x: point.x / window.innerWidth * viewportWidth + left,
+      y: point.y / window.innerHeight * viewportHeight + top
+    };
   }
 };
 
@@ -3346,21 +3353,27 @@ module.exports = {
   WORLD_MAX_X: 1000,
   WORLD_MAX_Y: 100,
   WINDOW_DEFAULT_WIDTH: 100,
-  WINDOW_DEFAULT_HEIGHT: 100
+  WINDOW_DEFAULT_HEIGHT: 100,
+  FISH_COUNT: 20,
+  FISH_RESTING_SPEED: 5,
+  FISH_STARTLE_SPEED: 50,
+  FISH_FOOD_APPROACH_SPEED: 30,
+  FISH_FOOD_OVERSHOOT: 40
 };
 
 },{}],47:[function(require,module,exports){
 var config = require('./config');
+var messages = require('../client/messages');
 
 // Gets a random number between a and b
 var rand = function(a, b) {
   return Math.random() * (b - a) + a;
-}
+};
 
 // Return true with probability p
 var maybe = function(p) {
   return Math.random() <= p;
-}
+};
 
 // Stubs out a fish, giving it a random id, position, and movement parameters
 var Fish = function(options) {
@@ -3373,7 +3386,7 @@ var Fish = function(options) {
   this.y = rand(0, config.WORLD_MAX_Y);
 
   // the direction the fish is moving, could be left or right
-  this.vx = this.options.restingSpeed * rand(0.9, 1.1);
+  this.vx = config.FISH_RESTING_SPEED * rand(0.9, 1.1);
   if(maybe(0.5)) {
     this.vx *= -1;
   }
@@ -3401,6 +3414,12 @@ var Fish = function(options) {
 
   // whether or not it's in "startled mode"
   this.startled = false;
+
+  // the previous transition state
+  this.transitioned = false;
+
+  // whether or not it's transitioning to a new viewport
+  this.transitioning = false;
 };
 
 // The list of fields that we want to share between the server and the client
@@ -3422,32 +3441,68 @@ Fish.serializableFields = [
 Fish.prototype.update = function() {
   var dt = 1 / 60;
 
+  this.isTransitioning();
+
   // basic motion
   this.x += this.vx * dt;
   this.y += this.vy * dt;
 
-  this.doTurn();
-  this.doMiniStartle();
+  if (this.transitioning) {
+    // Do not drift or turn the fish if it is transitioning to a new screen
+    this.vy = 0;
+  } else {
+    // Movement quirks
+    this.doTurn();
+    this.doMiniStartle();
 
-  // Every once and a while turn drift in a different direction vertically
-  if(maybe(0.01)) {
-    this.vy = rand(-3.0, 3.0);
-  }
+    // Every once and a while turn drift in a different direction vertically
+    if(maybe(0.01)) {
+      this.vy = rand(-3.0, 3.0);
+    }
 
-  // however, if we've gone too far vertically make the fish move back towards it's preferred depth
-  if(Math.abs(this.preferredDepth - this.y) > 40 && !this.feeding) {
-    this.vy = Math.sign(this.preferredDepth - this.y) * rand(10, 15);
+    // However, if we've gone too far vertically make the fish move back towards it's preferred depth
+    if(Math.abs(this.preferredDepth - this.y) > 40 && !this.feeding) {
+      this.vy = Math.sign(this.preferredDepth - this.y) * rand(10, 15);
+    }
   }
 
   this.checkCollision();
-}
+
+};
+
+// Calculate if the current fish is ready to transition to another client screen
+Fish.prototype.isTransitioning = function() {
+  var xrange = this.x % config.WINDOW_DEFAULT_WIDTH;
+  var xdir = Math.sign(this.vx);
+
+  this.transitioned = this.transitioning;
+  this.transitioning = ((xrange >= 97 && xdir === 1) || (xrange <=3 && xdir === -1));
+  if (!this.transitioned && this.transitioning) {
+
+    // Shove the fish across the screen chasm to the next screen and
+    // increase velocity for good measure.
+    if (xdir === -1) {
+      this.x = this.x - 10;
+      this.vx *= 1.2;
+    } else {
+      this.x += 10;
+      this.vx *= 1.2;
+    }
+
+    // Update position through a pub-sub event
+    messages.publish({
+      type: 'clientPosition',
+      fish: this.serialize()
+    });
+  }
+};
 
 // Handles startling logic. Every so often, the fish will get scared and move faster to get away!
 Fish.prototype.doMiniStartle = function() {
   // If we're not already startled, we might just become startled
   if(!this.startled && maybe(0.001)) {
     this.startled = true;
-    this.vx *= rand(2, 3);
+    this.vx = config.FISH_STARTLE_SPEED * rand(0.9, 1.1);
   }
   
   // if we're still above our resting speed, slowly reduce it until we're back at our normal speed
@@ -3524,7 +3579,8 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   }
 
   // if we're pretty close, don't attempt to turn so the fish overshoots a little, making it look more realistic
-  if(closestXDistance < 20 && this.y < 20) {
+  var totalFoodDistance = Math.sqrt(closestXDistance * closestXDistance + this.y * this.y);
+  if(totalFoodDistance < config.FISH_FOOD_OVERSHOOT) {
     this.feeding = false;
     return;
   }
@@ -3534,7 +3590,7 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   this.feeding = true;
   var closestFeedPointX = feedPoints[closestIndex].x;
   var approachAngle = Math.atan2(-this.y, closestFeedPointX - this.x);
-  var velocity = 10;
+  var velocity = config.FISH_FOOD_APPROACH_SPEED;
   this.vx = velocity * Math.cos(approachAngle);
   this.vy = velocity * Math.sin(approachAngle);
 };
@@ -3562,7 +3618,8 @@ Fish.prototype.deserializeExtraFields = function(serverData) {
 
 module.exports = Fish;
 
-},{"./config":46}],48:[function(require,module,exports){
+},{"../client/messages":5,"./config":46}],48:[function(require,module,exports){
+var config = require('./config');
 var Fish = require('./fish');
 
 var school = null;
@@ -3573,15 +3630,8 @@ module.exports = {
   init: function() {
     school = [];
     feedPoints = [];
-    for(var i = 0; i < 20; i++) {
-      school.push(new Fish({
-        restingSpeed: 50,
-        startledSpeed: 50,
-        minX: 0,
-        minY: 0,
-        maxX: 1000,
-        maxY: 1000
-      }));
+    for(var i = 0; i < config.FISH_COUNT; i++) {
+      school.push(new Fish());
     }
   },
 
@@ -3610,6 +3660,13 @@ module.exports = {
   // gets a single school member
   get: function(i) {
     return school[i];
+  },
+
+  // gets a single school member by its ID
+  getById: function(id) {
+    return school.find(function (fish) {
+      return fish.id = id;
+    });
   },
 
   // adds a new feeding point
@@ -3641,4 +3698,4 @@ module.exports = {
   }
 };
 
-},{"./fish":47}]},{},[3]);
+},{"./config":46,"./fish":47}]},{},[3]);

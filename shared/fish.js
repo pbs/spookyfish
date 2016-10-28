@@ -172,7 +172,8 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   }
 
   // if we're pretty close, don't attempt to turn so the fish overshoots a little, making it look more realistic
-  if(closestXDistance < config.FISH_FOOD_OVERSHOOT && this.y < config.FISH_FOOD_OVERSHOOT) {
+  var totalFoodDistance = Math.sqrt(closestXDistance * closestXDistance + this.y * this.y);
+  if(totalFoodDistance < config.FISH_FOOD_OVERSHOOT) {
     this.feeding = false;
     return;
   }

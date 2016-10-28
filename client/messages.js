@@ -6,7 +6,7 @@ var subscribers = [];
 // A nice wrapper around the faye client
 module.exports = {
   init: function() {
-    client = new faye.Client('http://localhost:8080/faye');
+    client = new faye.Client(location.origin + '/faye');
     client.subscribe('/messages', function(data) {
       subscribers.forEach(function(func) {
         func(data);

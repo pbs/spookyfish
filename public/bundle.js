@@ -67,7 +67,24 @@ module.exports = {
     boundingRect = document.body.getBoundingClientRect();
     WIDTH = boundingRect.width;
     HEIGHT = boundingRect.height;
-        
+    
+    // add the SPOOOOOOKY sandcastles
+    var castle = new PIXI.Sprite(PIXI.loader.resources['src-img/fish_base.png'].texture);
+    castle.anchor.y = 1.0;
+    castle.x = 0;
+    castle.y = window.innerHeight;
+    stage.addChild(castle);
+
+    var seaweedSprite;
+    for(var x = random.between(0, 100); x < window.innerWidth; x += random.between(400, 600)) {
+      seaweedSprite = new PIXI.Sprite(PIXI.loader.resources[random.fromArray(seaweed)].texture);
+      seaweedSprite.scale.x = seaweedSprite.scale.y = 0.2;
+      seaweedSprite.anchor.y = 1.0;
+      seaweedSprite.x = x;
+      seaweedSprite.y = window.innerHeight;
+      stage.addChild(seaweedSprite);
+    }
+
     school.all().forEach(function(fish, index){
       var randomFish = fishImages[fish.id % fishImages.length];
             
@@ -86,26 +103,11 @@ module.exports = {
     
     sub.sprite = new PIXI.Sprite(PIXI.loader.resources['src-img/spooky-fish_sub.png'].texture);
     sub.sprite.anchor.x = sub.sprite.anchor.y = 0.5;
+    sub.sprite.scale.x = -0.5;
+    sub.sprite.scale.y = 0.5;
     sub.sprite.x = sub.x;
     sub.sprite.y = sub.y;
     stage.addChild(sub.sprite);
-
-    // add the SPOOOOOOKY sandcastles
-    var castle = new PIXI.Sprite(PIXI.loader.resources['src-img/fish_base.png'].texture);
-    castle.anchor.y = 1.0;
-    castle.x = 0;
-    castle.y = window.innerHeight;
-    stage.addChild(castle);
-
-    var seaweedSprite;
-    for(var x = random.between(0, 100); x < window.innerWidth; x += random.between(400, 600)) {
-      seaweedSprite = new PIXI.Sprite(PIXI.loader.resources[random.fromArray(seaweed)].texture);
-      seaweedSprite.scale.x = seaweedSprite.scale.y = 0.2;
-      seaweedSprite.anchor.y = 1.0;
-      seaweedSprite.x = x;
-      seaweedSprite.y = window.innerHeight;
-      stage.addChild(seaweedSprite);
-    }
 
     renderer.render(stage);
     requestAnimationFrame(this.update.bind(this));
@@ -141,8 +143,10 @@ module.exports = {
         
         fish.sprite.scale.x = Math.sign(fish.vx) * Math.abs(fish.sprite.scale.x);      
       });
-   sub.sprite.x = sub.x;
-   sub.sprite.y = sub.y;
+
+   var attached = viewport.attachLocalCoords(sub);
+   sub.sprite.x = attached.localCoords.x;
+   sub.sprite.y = attached.localCoords.y;
   },
 };
 
@@ -3705,17 +3709,22 @@ module.exports = {
 },{"./config":46,"./fish":47}],50:[function(require,module,exports){
 var config = require('./config');
 var random = require('./random');
+
 module.exports = {
   init: function() {
     this.x = config.WINDOW_DEFAULT_WIDTH / 2;
     this.y = config.WINDOW_DEFAULT_HEIGHT * random.between(0.4, 0.6);
-    this.vx = 10;
+    this.vx = 7;
     this.vy = 0;
   },
 
   tick: function() {
     this.x += this.vx * 1 / 60;
     this.y += this.vy * 1 / 60;
+
+    if(this.x > config.WORLD_MAX_X + 20) {
+      this.x = -20;
+    }
   },
 
   serialize: function() {

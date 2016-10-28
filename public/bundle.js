@@ -3356,8 +3356,7 @@ process.umask = function() { return 0; };
 
 },{}],46:[function(require,module,exports){
 module.exports = {
-  //WORLD_MAX_X: 1000,
-  WORLD_MAX_X: 100,
+  WORLD_MAX_X: 1000,
   WORLD_MAX_Y: 100,
   WINDOW_DEFAULT_WIDTH: 100,
   WINDOW_DEFAULT_HEIGHT: 100,
@@ -3544,7 +3543,6 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   }
 
   // if we're pretty close, don't attempt to turn so the fish overshoots a little, making it look more realistic
-  var totalFoodDistance = Math.sqrt(closestXDistance * closestXDistance + this.y * this.y);
   if(this.y < config.FISH_FOOD_Y_OVERSHOOT || closestXDistance < config.FISH_FOOD_X_OVERSHOOT) {
     this.feeding = false;
     return;

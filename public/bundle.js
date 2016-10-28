@@ -54,8 +54,7 @@ module.exports = {
     HEIGHT = boundingRect.height;
         
     school.all().forEach(function(fish, index){
-      var randomFish = fishImages[Math.floor(Math.random() * fishImages.length)];
-      var randomScale = Math.floor(Math.random() * (5 - 2) - 2 ) / 5;
+      var randomFish = fishImages[fish.id % fishImages.length];
             
       fish.sprite = new PIXI.Sprite(
         PIXI.loader.resources[randomFish].texture
@@ -64,9 +63,8 @@ module.exports = {
       fish.sprite.x = fish.x;
       fish.sprite.y = fish.y;
       fish.sprite.anchor.set(0.5);
-      fish.randomScale = randomScale;
       
-      fish.sprite.scale.set(randomScale, randomScale);
+      fish.sprite.scale.set(fish.scale, fish.scale);
             
       stage.addChild(fish.sprite);
     });
@@ -96,6 +94,9 @@ module.exports = {
         var fish = attached.fish;
         fish.sprite.x = localCoords.x;
         fish.sprite.y = localCoords.y;
+      
+        var fishTexturePath = fishImages[fish.id % fishImages.length];
+        fish.sprite.texture = PIXI.loader.resources[fishTexturePath].texture;
       
         //thisFish.rotation = Math.sin(boid[3]);
         
@@ -3382,6 +3383,9 @@ var Fish = function(options) {
   // make the fish drift a little upwards
   this.vy = rand(-3.0, 3.0);
 
+  // the size of the fish
+  this.scale = Math.floor(Math.random() * (5 - 2) + 2 ) / 5;
+
   // the speed at which the fish drifts normally
   this.individualRestingSpeed = Math.abs(this.vx);
 
@@ -3403,10 +3407,12 @@ var Fish = function(options) {
 
 // The list of fields that we want to share between the server and the client
 Fish.serializableFields = [
+  'id',
   'x',
   'y',
   'vx',
   'vy',
+  'scale',
   'individualRestingSpeed',
   'speedAfterTurn',
   'turnDirection',

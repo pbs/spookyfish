@@ -9,7 +9,7 @@ module.exports = {
   init: function() {
     school = [];
     feedPoints = [];
-    for(var i = 0; i < 20; i++) {
+    for(var i = 0; i < config.FISH_COUNT; i++) {
       school.push(new Fish());
     }
   },

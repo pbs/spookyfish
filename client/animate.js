@@ -85,6 +85,8 @@ module.exports = {
     
     sub.sprite = new PIXI.Sprite(PIXI.loader.resources['src-img/spooky-fish_sub.png'].texture);
     sub.sprite.anchor.x = sub.sprite.anchor.y = 0.5;
+    sub.sprite.scale.x = -0.5;
+    sub.sprite.scale.y = 0.5;
     sub.sprite.x = sub.x;
     sub.sprite.y = sub.y;
     stage.addChild(sub.sprite);
@@ -140,7 +142,9 @@ module.exports = {
         
         fish.sprite.scale.x = Math.sign(fish.vx) * Math.abs(fish.sprite.scale.x);      
       });
-   sub.sprite.x = sub.x;
-   sub.sprite.y = sub.y;
+
+   var attached = viewport.attachLocalCoords(sub);
+   sub.sprite.x = attached.localCoords.x;
+   sub.sprite.y = attached.localCoords.y;
   },
 };

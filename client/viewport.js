@@ -30,8 +30,6 @@ module.exports = {
   },
 
   toLocalCoords: function(boid) {
-//    var elementWidth = Number(element.getAttribute('width'));
-//    var elementHeight = Number(element.getAttribute('height'));    
     var elementWidth = window.innerWidth;
     var elementHeight = window.innerHeight;
     var x = (boid[0] - left) / viewportWidth * elementWidth;

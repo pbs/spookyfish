@@ -1,33 +1,24 @@
 var config = require('./config');
-
-// Gets a random number between a and b
-var rand = function(a, b) {
-  return Math.random() * (b - a) + a;
-}
-
-// Return true with probability p
-var maybe = function(p) {
-  return Math.random() <= p;
-}
+var random = require('./random');
 
 // Stubs out a fish, giving it a random id, position, and movement parameters
 var Fish = function(options) {
   this.options = options;
 
-  this.id = Math.floor(Math.random() * 100000);
+  this.id = Math.floor(random.between(0, 100000));
   
   // the x and y position
-  this.x = rand(0, config.WORLD_MAX_X);
-  this.y = rand(0, config.WORLD_MAX_Y);
+  this.x = random.between(0, config.WORLD_MAX_X);
+  this.y = random.between(0, config.WORLD_MAX_Y);
 
   // the direction the fish is moving, could be left or right
-  this.vx = config.FISH_RESTING_SPEED * rand(0.9, 1.1);
-  if(maybe(0.5)) {
+  this.vx = config.FISH_RESTING_SPEED * random.between(0.9, 1.1);
+  if(random.maybe(0.5)) {
     this.vx *= -1;
   }
 
   // make the fish drift a little upwards
-  this.vy = rand(-3.0, 3.0);
+  this.vy = random.between(-3.0, 3.0);
 
   // the size of the fish
   this.scale = Math.floor(Math.random() * (5 - 2) + 2 ) / 5;
@@ -78,13 +69,13 @@ Fish.prototype.update = function() {
   this.doMiniStartle();
 
   // Every once and a while turn drift in a different direction vertically
-  if(maybe(0.01)) {
-    this.vy = rand(-3.0, 3.0);
+  if(random.maybe(0.01)) {
+    this.vy = random.between(-3.0, 3.0);
   }
 
   // however, if we've gone too far vertically make the fish move back towards it's preferred depth
   if(Math.abs(this.preferredDepth - this.y) > 40 && !this.feeding) {
-    this.vy = Math.sign(this.preferredDepth - this.y) * rand(10, 15);
+    this.vy = Math.sign(this.preferredDepth - this.y) * random.between(10, 15);
   }
 
   this.checkCollision();
@@ -93,9 +84,9 @@ Fish.prototype.update = function() {
 // Handles startling logic. Every so often, the fish will get scared and move faster to get away!
 Fish.prototype.doMiniStartle = function() {
   // If we're not already startled, we might just become startled
-  if(!this.startled && maybe(0.001)) {
+  if(!this.startled && random.maybe(0.001)) {
     this.startled = true;
-    this.vx = config.FISH_STARTLE_SPEED * rand(0.9, 1.1);
+    this.vx = config.FISH_STARTLE_SPEED * random.between(0.9, 1.1);
   }
   
   // if we're still above our resting speed, slowly reduce it until we're back at our normal speed
@@ -114,7 +105,7 @@ Fish.prototype.doMiniStartle = function() {
 Fish.prototype.doTurn = function() {
   // If we're not currently turning, we might just start turning. In this case we always turn to the opposite
   // direction that we're currently going
-  if(this.turnDirection === 0 && maybe(0.001)) {
+  if(this.turnDirection === 0 && random.maybe(0.001)) {
     this.turnDirection = -Math.sign(this.vx);
     this.speedAfterTurn = -this.vx;
   }

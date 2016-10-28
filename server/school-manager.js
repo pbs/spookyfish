@@ -1,4 +1,5 @@
 var school = require('../shared/school');
+var sub = require('../shared/sub');
 
 var UPDATE_INTERVAL = 1000;
 var TIME_STEP = 1000 / 60;
@@ -20,11 +21,13 @@ module.exports = {
     for(var i = 0; i < TICKS_PER_UPDATE; i++) {
       school.tick();
     }
+    sub.tick();
 
     // notify the press
     client.publish('/messages', {
       type: 'position',
-      school: school.serialize()
+      school: school.serialize(),
+      sub: sub.tick(),
     });
   },
 

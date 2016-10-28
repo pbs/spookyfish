@@ -1,5 +1,6 @@
 var viewport = require('./viewport');
 var school = require('../shared/school');
+var sub = require('../shared/sub');
 var messages = require('./messages');
 var schoolSync = require('./school-sync');
 var animate = require('./animate');
@@ -16,7 +17,7 @@ var HEIGHT = boundingRect.height;
 
 
 school.init();
-
+sub.init();
 messages.init();
 schoolSync.init();
 animate.load(function() {

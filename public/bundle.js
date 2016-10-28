@@ -2,6 +2,8 @@
 var config = require('../shared/config');
 var viewport = require('./viewport');
 var school = require('../shared/school');
+var sub = require('../shared/sub');
+var random = require('../shared/random');
 
 var boundingRect;
 var WIDTH;
@@ -16,9 +18,21 @@ var fishImages = [
   "src-img/halloween_fish3.png"
 ];
 
+var seaweed = [
+  "src-img/seaweed-1.png",
+  "src-img/seaweed-2.png",
+  "src-img/seaweed-3.png",
+  "src-img/seaweed-4.png",
+  "src-img/seaweed-5.png"
+];
+
 module.exports = {
   load: function (callback){
-    PIXI.loader.add(fishImages).load(function() {
+    var allImages = fishImages.concat(seaweed).concat([
+      'src-img/fish_base.png',
+      'src-img/spooky-fish_sub.png'
+    ]);
+    PIXI.loader.add(allImages).load(function() {
       this.init();
       callback && callback();
     }.bind(this));
@@ -70,12 +84,36 @@ module.exports = {
       stage.addChild(fish.sprite);
     });
     
+    sub.sprite = new PIXI.Sprite(PIXI.loader.resources['src-img/spooky-fish_sub.png'].texture);
+    sub.sprite.anchor.x = sub.sprite.anchor.y = 0.5;
+    sub.sprite.x = sub.x;
+    sub.sprite.y = sub.y;
+    stage.addChild(sub.sprite);
+
+    // add the SPOOOOOOKY sandcastles
+    var castle = new PIXI.Sprite(PIXI.loader.resources['src-img/fish_base.png'].texture);
+    castle.anchor.y = 1.0;
+    castle.x = 0;
+    castle.y = window.innerHeight;
+    stage.addChild(castle);
+
+    var seaweedSprite;
+    for(var x = random.between(0, 100); x < window.innerWidth; x += random.between(400, 600)) {
+      seaweedSprite = new PIXI.Sprite(PIXI.loader.resources[random.fromArray(seaweed)].texture);
+      seaweedSprite.scale.x = seaweedSprite.scale.y = 0.2;
+      seaweedSprite.anchor.y = 1.0;
+      seaweedSprite.x = x;
+      seaweedSprite.y = window.innerHeight;
+      stage.addChild(seaweedSprite);
+    }
+
     renderer.render(stage);
     requestAnimationFrame(this.update.bind(this));
   },
   
   update: function() {
     school.tick();
+    sub.tick();
     requestAnimationFrame(this.update.bind(this));
 
 
@@ -103,10 +141,12 @@ module.exports = {
         
         fish.sprite.scale.x = Math.sign(fish.vx) * Math.abs(fish.sprite.scale.x);      
       });
+   sub.sprite.x = sub.x;
+   sub.sprite.y = sub.y;
   },
 };
 
-},{"../shared/config":46,"../shared/school":48,"./viewport":7}],2:[function(require,module,exports){
+},{"../shared/config":46,"../shared/random":48,"../shared/school":49,"../shared/sub":50,"./viewport":7}],2:[function(require,module,exports){
 var dt = 1 / 60;
 
 // This performs dead reckoning: The client has a local estimation of the server's data, but periodically the server
@@ -140,6 +180,7 @@ module.exports = {
 },{}],3:[function(require,module,exports){
 var viewport = require('./viewport');
 var school = require('../shared/school');
+var sub = require('../shared/sub');
 var messages = require('./messages');
 var schoolSync = require('./school-sync');
 var animate = require('./animate');
@@ -156,7 +197,7 @@ var HEIGHT = boundingRect.height;
 
 
 school.init();
-
+sub.init();
 messages.init();
 schoolSync.init();
 animate.load(function() {
@@ -164,7 +205,7 @@ animate.load(function() {
 });
 //requestAnimationFrame(animate.update.bind(animate));
 
-},{"../shared/school":48,"./animate":1,"./interaction":4,"./messages":5,"./school-sync":6,"./viewport":7}],4:[function(require,module,exports){
+},{"../shared/school":49,"../shared/sub":50,"./animate":1,"./interaction":4,"./messages":5,"./school-sync":6,"./viewport":7}],4:[function(require,module,exports){
 var school = require('../shared/school');
 var viewport = require('./viewport');
 var messages = require('./messages');
@@ -190,7 +231,7 @@ module.exports = {
   },
 };
 
-},{"../shared/school":48,"./messages":5,"./viewport":7}],5:[function(require,module,exports){
+},{"../shared/school":49,"./messages":5,"./viewport":7}],5:[function(require,module,exports){
 var faye = require('faye');
 
 var client;
@@ -256,7 +297,7 @@ module.exports = {
   }
 };
 
-},{"../shared/school":48,"./dead-reckoning":2,"./messages":5,"./viewport":7}],7:[function(require,module,exports){
+},{"../shared/school":49,"./dead-reckoning":2,"./messages":5,"./viewport":7}],7:[function(require,module,exports){
 var element = null;
 
 var top = 0;
@@ -3356,7 +3397,7 @@ process.umask = function() { return 0; };
 
 },{}],46:[function(require,module,exports){
 module.exports = {
-  WORLD_MAX_X: 1000,
+  WORLD_MAX_X: 100,
   WORLD_MAX_Y: 100,
   WINDOW_DEFAULT_WIDTH: 100,
   WINDOW_DEFAULT_HEIGHT: 100,
@@ -3370,35 +3411,26 @@ module.exports = {
 
 },{}],47:[function(require,module,exports){
 var config = require('./config');
-
-// Gets a random number between a and b
-var rand = function(a, b) {
-  return Math.random() * (b - a) + a;
-}
-
-// Return true with probability p
-var maybe = function(p) {
-  return Math.random() <= p;
-}
+var random = require('./random');
 
 // Stubs out a fish, giving it a random id, position, and movement parameters
 var Fish = function(options) {
   this.options = options;
 
-  this.id = Math.floor(Math.random() * 100000);
+  this.id = Math.floor(random.between(0, 100000));
   
   // the x and y position
-  this.x = rand(0, config.WORLD_MAX_X);
-  this.y = rand(0, config.WORLD_MAX_Y);
+  this.x = random.between(0, config.WORLD_MAX_X);
+  this.y = random.between(0, config.WORLD_MAX_Y);
 
   // the direction the fish is moving, could be left or right
-  this.vx = config.FISH_RESTING_SPEED * rand(0.9, 1.1);
-  if(maybe(0.5)) {
+  this.vx = config.FISH_RESTING_SPEED * random.between(0.9, 1.1);
+  if(random.maybe(0.5)) {
     this.vx *= -1;
   }
 
   // make the fish drift a little upwards
-  this.vy = rand(-3.0, 3.0);
+  this.vy = random.between(-3.0, 3.0);
 
   // the size of the fish
   this.scale = Math.floor(Math.random() * (5 - 2) + 2 ) / 5;
@@ -3449,13 +3481,13 @@ Fish.prototype.update = function() {
   this.doMiniStartle();
 
   // Every once and a while turn drift in a different direction vertically
-  if(maybe(0.01)) {
-    this.vy = rand(-3.0, 3.0);
+  if(random.maybe(0.01)) {
+    this.vy = random.between(-3.0, 3.0);
   }
 
   // however, if we've gone too far vertically make the fish move back towards it's preferred depth
   if(Math.abs(this.preferredDepth - this.y) > 40 && !this.feeding) {
-    this.vy = Math.sign(this.preferredDepth - this.y) * rand(10, 15);
+    this.vy = Math.sign(this.preferredDepth - this.y) * random.between(10, 15);
   }
 
   this.checkCollision();
@@ -3464,9 +3496,9 @@ Fish.prototype.update = function() {
 // Handles startling logic. Every so often, the fish will get scared and move faster to get away!
 Fish.prototype.doMiniStartle = function() {
   // If we're not already startled, we might just become startled
-  if(!this.startled && maybe(0.001)) {
+  if(!this.startled && random.maybe(0.001)) {
     this.startled = true;
-    this.vx = config.FISH_STARTLE_SPEED * rand(0.9, 1.1);
+    this.vx = config.FISH_STARTLE_SPEED * random.between(0.9, 1.1);
   }
   
   // if we're still above our resting speed, slowly reduce it until we're back at our normal speed
@@ -3485,7 +3517,7 @@ Fish.prototype.doMiniStartle = function() {
 Fish.prototype.doTurn = function() {
   // If we're not currently turning, we might just start turning. In this case we always turn to the opposite
   // direction that we're currently going
-  if(this.turnDirection === 0 && maybe(0.001)) {
+  if(this.turnDirection === 0 && random.maybe(0.001)) {
     this.turnDirection = -Math.sign(this.vx);
     this.speedAfterTurn = -this.vx;
   }
@@ -3507,12 +3539,10 @@ Fish.prototype.doTurn = function() {
 
 Fish.prototype.checkCollision = function() {
   // Wall collision
-  if(this.x < 0) {
-    this.x = 0;
-    this.vx = Math.abs(this.vx);
-  } else if(this.x > config.WORLD_MAX_X) {
-    this.x = config.WORLD_MAX_X;
-    this.vx = -Math.abs(this.vx);
+  if(this.x < -5) {
+    this.x = config.WORLD_MAX_X + 4;
+  } else if(this.x > config.WORLD_MAX_X + 5) {
+    this.x = -4;
   }
   
   if(this.y < 0) {
@@ -3581,7 +3611,25 @@ Fish.prototype.deserializeExtraFields = function(serverData) {
 
 module.exports = Fish;
 
-},{"./config":46}],48:[function(require,module,exports){
+},{"./config":46,"./random":48}],48:[function(require,module,exports){
+module.exports = {
+  // Gets a random number between a and b
+  between: function(a, b) {
+    return Math.random() * (b - a) + a;
+  },
+
+  // Return true with probability p
+  maybe: function(p) {
+    return Math.random() <= p;
+  },
+
+  // gets a random thing from an array
+  fromArray: function(array) {
+    return array[Math.floor(Math.random() * array.length)];
+  }
+};
+
+},{}],49:[function(require,module,exports){
 var config = require('./config');
 var Fish = require('./fish');
 
@@ -3654,4 +3702,38 @@ module.exports = {
   }
 };
 
-},{"./config":46,"./fish":47}]},{},[3]);
+},{"./config":46,"./fish":47}],50:[function(require,module,exports){
+var config = require('./config');
+var random = require('./random');
+module.exports = {
+  init: function() {
+    this.x = config.WINDOW_DEFAULT_WIDTH / 2;
+    this.y = config.WINDOW_DEFAULT_HEIGHT * random.between(0.4, 0.6);
+    this.vx = 10;
+    this.vy = 0;
+  },
+
+  tick: function() {
+    this.x += this.vx * 1 / 60;
+    this.y += this.vy * 1 / 60;
+  },
+
+  serialize: function() {
+    var serialized = {};
+    this.serializableFields.forEach(function(field) {
+      serialized[field] = this[field];
+    }.bind(this));
+
+    return serialized;
+  },
+
+  unserialize: function(serialized) {
+    this.serializableFields.forEach(function(field) {
+      this[field]= serialized[field];
+    }.bind(this));
+  },
+
+  serializableFields: ['x', 'y', 'vx', 'vy']
+};
+
+},{"./config":46,"./random":48}]},{},[3]);

@@ -1,6 +1,7 @@
 var config = require('../shared/config');
 var viewport = require('./viewport');
 var school = require('../shared/school');
+var sub = require('../shared/sub');
 var random = require('../shared/random');
 
 var boundingRect;
@@ -26,7 +27,10 @@ var seaweed = [
 
 module.exports = {
   load: function (callback){
-    var allImages = fishImages.concat(seaweed).concat(['src-img/fish_base.png']);
+    var allImages = fishImages.concat(seaweed).concat([
+      'src-img/fish_base.png',
+      'src-img/spooky-fish_sub.png'
+    ]);
     PIXI.loader.add(allImages).load(function() {
       this.init();
       callback && callback();
@@ -78,6 +82,12 @@ module.exports = {
             
       stage.addChild(fish.sprite);
     });
+    
+    sub.sprite = new PIXI.Sprite(PIXI.loader.resources['src-img/spooky-fish_sub.png'].texture);
+    sub.sprite.anchor.x = sub.sprite.anchor.y = 0.5;
+    sub.sprite.x = sub.x;
+    sub.sprite.y = sub.y;
+    stage.addChild(sub.sprite);
 
     // add the SPOOOOOOKY sandcastles
     var castle = new PIXI.Sprite(PIXI.loader.resources['src-img/fish_base.png'].texture);
@@ -102,6 +112,7 @@ module.exports = {
   
   update: function() {
     school.tick();
+    sub.tick();
     requestAnimationFrame(this.update.bind(this));
 
 
@@ -129,5 +140,7 @@ module.exports = {
         
         fish.sprite.scale.x = Math.sign(fish.vx) * Math.abs(fish.sprite.scale.x);      
       });
+   sub.sprite.x = sub.x;
+   sub.sprite.y = sub.y;
   },
 };

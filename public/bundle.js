@@ -3401,7 +3401,7 @@ process.umask = function() { return 0; };
 
 },{}],46:[function(require,module,exports){
 module.exports = {
-  WORLD_MAX_X: 100,
+  WORLD_MAX_X: 1000,
   WORLD_MAX_Y: 100,
   WINDOW_DEFAULT_WIDTH: 100,
   WINDOW_DEFAULT_HEIGHT: 100,

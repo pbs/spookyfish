@@ -1,7 +1,4 @@
-var SCHOOL_MIN_X = 0;
-var SCHOOL_MAX_X = 500;
-var SCHOOL_MIN_Y = 0;
-var SCHOOL_MAX_Y = 500;
+var config = require('./config');
 
 // Gets a random number between a and b
 var rand = function(a, b) {
@@ -19,15 +16,9 @@ var Fish = function(options) {
 
   this.id = Math.floor(Math.random() * 100000);
   
-  // the boundaries for where the fish can move in the world
-  this.minX = this.options.minX; 
-  this.minY = this.options.minY;
-  this.maxX = this.options.maxX;
-  this.maxY = this.options.maxY;
-  
   // the x and y position
-  this.x = rand(this.minX, this.maxX);
-  this.y = rand(this.minY, this.maxY);
+  this.x = rand(0, config.WORLD_MAX_X);
+  this.y = rand(0, config.WORLD_MAX_Y);
 
   // the direction the fish is moving, could be left or right
   this.vx = this.options.restingSpeed * rand(0.9, 1.1);
@@ -145,19 +136,19 @@ Fish.prototype.doTurn = function() {
 
 Fish.prototype.checkCollision = function() {
   // Wall collision
-  if(this.x < this.minX) {
-    this.x = this.minX;
+  if(this.x < 0) {
+    this.x = 0;
     this.vx = Math.abs(this.vx);
-  } else if(this.x > this.maxX) {
-    this.x = this.maxX;
+  } else if(this.x > config.WORLD_MAX_X) {
+    this.x = config.WORLD_MAX_X;
     this.vx = -Math.abs(this.vx);
   }
   
-  if(this.y < this.minY) {
-    this.y = this.minY;
+  if(this.y < 0) {
+    this.y = 0;
     this.vy = Math.abs(this.vy);
-  } else if(this.y > this.maxY) {
-    this.y = this.maxY;
+  } else if(this.y > config.WORLD_MAX_Y) {
+    this.y = config.WORLD_MAX_Y;
     this.vy = -Math.abs(this.vy);
   }
 };
@@ -191,7 +182,7 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   this.feeding = true;
   var closestFeedPointX = feedPoints[closestIndex].x;
   var approachAngle = Math.atan2(-this.y, closestFeedPointX - this.x);
-  var velocity = 50;
+  var velocity = 10;
   this.vx = velocity * Math.cos(approachAngle);
   this.vy = velocity * Math.sin(approachAngle);
 };

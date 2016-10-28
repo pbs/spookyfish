@@ -19,8 +19,6 @@ module.exports = {
     bottom = newBottom;
     right = newRight;
 
-    console.log(top, left, bottom, right);
-
     viewportWidth = right - left;
     viewportHeight = bottom - top;
   },

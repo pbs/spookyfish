@@ -1,3 +1,4 @@
+var config = require('../shared/config');
 var viewport = require('./viewport');
 var school = require('../shared/school');
 
@@ -42,10 +43,10 @@ module.exports = {
     if(isNaN(screenPosition)) {
       screenPosition = 0;
     }
-    var screenLeft = screenPosition * window.innerWidth/2;
-    var screenRight = screenLeft + window.innerWidth/2;
+    var screenLeft = screenPosition * config.WINDOW_DEFAULT_WIDTH;
+    var screenRight = screenLeft + config.WINDOW_DEFAULT_WIDTH;
 
-    viewport.setBoundaries(0, screenLeft, window.innerHeight, screenRight);
+    viewport.setBoundaries(0, screenLeft, config.WINDOW_DEFAULT_HEIGHT, screenRight);
     window.viewport = viewport;
 
     boundingRect = document.body.getBoundingClientRect();

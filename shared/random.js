@@ -7,5 +7,10 @@ module.exports = {
   // Return true with probability p
   maybe: function(p) {
     return Math.random() <= p;
+  },
+
+  // gets a random thing from an array
+  fromArray: function(array) {
+    return array[Math.floor(Math.random() * array.length)];
   }
 };

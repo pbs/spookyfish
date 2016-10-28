@@ -1,3 +1,4 @@
+var config = require('./config');
 var Fish = require('./fish');
 
 var school = null;
@@ -9,14 +10,7 @@ module.exports = {
     school = [];
     feedPoints = [];
     for(var i = 0; i < 20; i++) {
-      school.push(new Fish({
-        restingSpeed: 50,
-        startledSpeed: 50,
-        minX: 0,
-        minY: 0,
-        maxX: 1000,
-        maxY: 1000
-      }));
+      school.push(new Fish());
     }
   },
 

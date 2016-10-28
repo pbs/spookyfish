@@ -21,7 +21,7 @@ var Fish = function(options) {
   this.y = rand(0, config.WORLD_MAX_Y);
 
   // the direction the fish is moving, could be left or right
-  this.vx = this.options.restingSpeed * rand(0.9, 1.1);
+  this.vx = config.FISH_RESTING_SPEED * rand(0.9, 1.1);
   if(maybe(0.5)) {
     this.vx *= -1;
   }

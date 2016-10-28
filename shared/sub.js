@@ -1,16 +1,21 @@
 var config = require('./config');
 var random = require('./random');
+
 module.exports = {
   init: function() {
     this.x = config.WINDOW_DEFAULT_WIDTH / 2;
     this.y = config.WINDOW_DEFAULT_HEIGHT * random.between(0.4, 0.6);
-    this.vx = 10;
+    this.vx = 7;
     this.vy = 0;
   },
 
   tick: function() {
     this.x += this.vx * 1 / 60;
     this.y += this.vy * 1 / 60;
+
+    if(this.x > config.WORLD_MAX_X + 20) {
+      this.x = -20;
+    }
   },
 
   serialize: function() {

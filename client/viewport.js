@@ -37,5 +37,12 @@ module.exports = {
         y: (fish.y - top) / viewportHeight * elementHeight
       }
     }
+  },
+
+  toGlobalCoords: function(point) {
+    return {
+      x: point.x / window.innerWidth * viewportWidth + left,
+      y: point.y / window.innerHeight * viewportHeight + top
+    };
   }
 };

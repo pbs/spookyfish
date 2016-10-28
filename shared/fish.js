@@ -195,7 +195,7 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
 Fish.prototype.serialize = function() {
   var serialized = {};
   Fish.serializableFields.forEach(function(fieldName) {
-    serialize[fieldName] = this[fieldName];
+    serialized[fieldName] = this[fieldName];
   }.bind(this));
   return serialized;
 };

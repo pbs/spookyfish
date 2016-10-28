@@ -59,6 +59,7 @@ var Fish = function(options) {
 
 // The list of fields that we want to share between the server and the client
 Fish.serializableFields = [
+  'id',
   'x',
   'y',
   'vx',

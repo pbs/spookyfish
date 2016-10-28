@@ -53,7 +53,7 @@ module.exports = {
     HEIGHT = boundingRect.height;
         
     school.all().forEach(function(fish, index){
-      var randomFish = fishImages[Math.floor(Math.random() * fishImages.length)];
+      var randomFish = fishImages[fish.id % fishImages.length];
       var randomScale = Math.floor(Math.random() * (5 - 2) - 2 ) / 5;
             
       fish.sprite = new PIXI.Sprite(
@@ -95,6 +95,9 @@ module.exports = {
         var fish = attached.fish;
         fish.sprite.x = localCoords.x;
         fish.sprite.y = localCoords.y;
+      
+        var fishTexturePath = fishImages[fish.id % fishImages.length];
+        fish.sprite.texture = PIXI.loader.resources[fishTexturePath].texture;
       
         //thisFish.rotation = Math.sin(boid[3]);
         

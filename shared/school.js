@@ -10,7 +10,7 @@ module.exports = {
     feedPoints = [];
     for(var i = 0; i < 20; i++) {
       school.push(new Fish({
-        restingSpeed: 10,
+        restingSpeed: 50,
         startledSpeed: 50,
         minX: 0,
         minY: 0,

@@ -90,9 +90,12 @@ module.exports = {
 
     school
       .all()
-      .forEach(function(fish, index) {
-        fish.sprite.x = fish.x;
-        fish.sprite.y = fish.y;
+      .map(viewport.attachLocalCoords)
+      .forEach(function(attached, index) {
+        var localCoords = attached.localCoords;
+        var fish = attached.fish;
+        fish.sprite.x = localCoords.x;
+        fish.sprite.y = localCoords.y;
       
         //thisFish.rotation = Math.sin(boid[3]);
         
@@ -234,11 +237,11 @@ module.exports = {
     for(var i = 0; i < newFish.length; i++) {
       school.get(i).deserializeExtraFields(newFish[i]);     
 
-      if(neverSynced) {
+      //if(neverSynced) {
         deadReckoning.zerothOrder(school.get(i), newFish[i]);
-      } else {
-        //deadReckoning.firstOrder(school.get(i), newFish[i]);
-      }
+      //} else {
+      //  deadReckoning.firstOrder(school.get(i), newFish[i]);
+      //}
     }
 
     neverSynced = false;
@@ -273,20 +276,20 @@ module.exports = {
     viewportHeight = bottom - top;
   },
 
-  containsBoid: function(boid) {
-    return boid[0] >= left && boid[0] < right && boid[1] >= top && boid[1] < bottom;
+  containsFish: function(fish) {
+    return fish.x >= left && fish.x < right && fish.y >= top && fish.y < bottom;
   },
 
-  toLocalCoords: function(boid) {
-//    var elementWidth = Number(element.getAttribute('width'));
-//    var elementHeight = Number(element.getAttribute('height'));    
+  attachLocalCoords: function(fish) {
     var elementWidth = window.innerWidth;
     var elementHeight = window.innerHeight;
-    var x = (boid[0] - left) / viewportWidth * elementWidth;
-    var y = (boid[1] - top) / viewportHeight * elementHeight;
-    boid[0] = x;
-    boid[1] = y;
-    return boid;
+    return {
+      fish: fish,
+      localCoords: {
+        x: (fish.x - left) / viewportWidth * elementWidth,
+        y: (fish.y - top) / viewportHeight * elementHeight
+      }
+    }
   }
 };
 
@@ -3568,7 +3571,7 @@ module.exports = {
     feedPoints = [];
     for(var i = 0; i < 20; i++) {
       school.push(new Fish({
-        restingSpeed: 10,
+        restingSpeed: 50,
         startledSpeed: 50,
         minX: 0,
         minY: 0,

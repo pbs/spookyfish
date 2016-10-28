@@ -2,6 +2,7 @@ var viewport = require('./viewport');
 var deadReckoning = require('./dead-reckoning');
 var messages = require('./messages');
 var school = require('../shared/school');
+var sub = require('../shared/sub');
 
 var neverSynced = true;
 
@@ -17,6 +18,7 @@ module.exports = {
       // when a message is received, reset feed points to match what the server has, and then attempt to fix fish
       // positions
       school.setFeedPoints(data.school.feedPoints);
+      sub.unserialize(data.sub);
       this.receiveVisibleSchoolUpdate(data.school.fish);
     }.bind(this));
   },

@@ -10,6 +10,7 @@ var client = null;
 module.exports = {
   init: function(fayeClient, width, height) {
     school.init();
+    sub.init();
     client = fayeClient;
 
     client.subscribe('/messages', this.onReceiveFeedPoint);
@@ -20,14 +21,14 @@ module.exports = {
   update: function() {
     for(var i = 0; i < TICKS_PER_UPDATE; i++) {
       school.tick();
+      sub.tick();
     }
-    sub.tick();
 
     // notify the press
     client.publish('/messages', {
       type: 'position',
       school: school.serialize(),
-      sub: sub.tick(),
+      sub: sub.serialize(),
     });
   },
 

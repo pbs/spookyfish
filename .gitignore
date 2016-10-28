@@ -1,6 +1,7 @@
 node_modules
 # public/bundle.js
 *.swp
+npm-debug.log
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*

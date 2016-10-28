@@ -66,7 +66,24 @@ module.exports = {
     boundingRect = document.body.getBoundingClientRect();
     WIDTH = boundingRect.width;
     HEIGHT = boundingRect.height;
-        
+    
+    // add the SPOOOOOOKY sandcastles
+    var castle = new PIXI.Sprite(PIXI.loader.resources['src-img/fish_base.png'].texture);
+    castle.anchor.y = 1.0;
+    castle.x = 0;
+    castle.y = window.innerHeight;
+    stage.addChild(castle);
+
+    var seaweedSprite;
+    for(var x = random.between(0, 100); x < window.innerWidth; x += random.between(400, 600)) {
+      seaweedSprite = new PIXI.Sprite(PIXI.loader.resources[random.fromArray(seaweed)].texture);
+      seaweedSprite.scale.x = seaweedSprite.scale.y = 0.2;
+      seaweedSprite.anchor.y = 1.0;
+      seaweedSprite.x = x;
+      seaweedSprite.y = window.innerHeight;
+      stage.addChild(seaweedSprite);
+    }
+
     school.all().forEach(function(fish, index){
       var randomFish = fishImages[fish.id % fishImages.length];
             
@@ -90,23 +107,6 @@ module.exports = {
     sub.sprite.x = sub.x;
     sub.sprite.y = sub.y;
     stage.addChild(sub.sprite);
-
-    // add the SPOOOOOOKY sandcastles
-    var castle = new PIXI.Sprite(PIXI.loader.resources['src-img/fish_base.png'].texture);
-    castle.anchor.y = 1.0;
-    castle.x = 0;
-    castle.y = window.innerHeight;
-    stage.addChild(castle);
-
-    var seaweedSprite;
-    for(var x = random.between(0, 100); x < window.innerWidth; x += random.between(400, 600)) {
-      seaweedSprite = new PIXI.Sprite(PIXI.loader.resources[random.fromArray(seaweed)].texture);
-      seaweedSprite.scale.x = seaweedSprite.scale.y = 0.2;
-      seaweedSprite.anchor.y = 1.0;
-      seaweedSprite.x = x;
-      seaweedSprite.y = window.innerHeight;
-      stage.addChild(seaweedSprite);
-    }
 
     renderer.render(stage);
     requestAnimationFrame(this.update.bind(this));

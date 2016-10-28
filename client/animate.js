@@ -17,7 +17,8 @@ var fishImages = [
 
 module.exports = {
   load: function (callback){
-    PIXI.loader.add(fishImages).load(function() {
+    var allImages = fishImages.concat(['src-img/fish_base.png']);
+    PIXI.loader.add(allImages).load(function() {
       this.init();
       callback && callback();
     }.bind(this));
@@ -68,7 +69,14 @@ module.exports = {
             
       stage.addChild(fish.sprite);
     });
-    
+
+    // add the SPOOOOOOKY sandcastles
+    var castle = new PIXI.Sprite(PIXI.loader.resources['src-img/fish_base.png'].texture);
+    castle.anchor.y = 1.0;
+    castle.x = 0;
+    castle.y = window.innerHeight;
+    stage.addChild(castle);
+
     renderer.render(stage);
     requestAnimationFrame(this.update.bind(this));
   },

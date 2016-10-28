@@ -1,4 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var config = require('../shared/config');
 var viewport = require('./viewport');
 var school = require('../shared/school');
 
@@ -43,10 +44,10 @@ module.exports = {
     if(isNaN(screenPosition)) {
       screenPosition = 0;
     }
-    var screenLeft = screenPosition * window.innerWidth/2;
-    var screenRight = screenLeft + window.innerWidth/2;
+    var screenLeft = screenPosition * config.WINDOW_DEFAULT_WIDTH;
+    var screenRight = screenLeft + config.WINDOW_DEFAULT_WIDTH;
 
-    viewport.setBoundaries(0, screenLeft, window.innerHeight, screenRight);
+    viewport.setBoundaries(0, screenLeft, config.WINDOW_DEFAULT_HEIGHT, screenRight);
     window.viewport = viewport;
 
     boundingRect = document.body.getBoundingClientRect();
@@ -105,7 +106,7 @@ module.exports = {
   },
 };
 
-},{"../shared/school":47,"./viewport":7}],2:[function(require,module,exports){
+},{"../shared/config":46,"../shared/school":48,"./viewport":7}],2:[function(require,module,exports){
 var dt = 1 / 60;
 
 // This performs dead reckoning: The client has a local estimation of the server's data, but periodically the server
@@ -163,7 +164,7 @@ animate.load(function() {
 });
 //requestAnimationFrame(animate.update.bind(animate));
 
-},{"../shared/school":47,"./animate":1,"./interaction":4,"./messages":5,"./school-sync":6,"./viewport":7}],4:[function(require,module,exports){
+},{"../shared/school":48,"./animate":1,"./interaction":4,"./messages":5,"./school-sync":6,"./viewport":7}],4:[function(require,module,exports){
 var school = require('../shared/school');
 var messages = require('./messages');
 
@@ -183,7 +184,7 @@ module.exports = {
   },
 };
 
-},{"../shared/school":47,"./messages":5}],5:[function(require,module,exports){
+},{"../shared/school":48,"./messages":5}],5:[function(require,module,exports){
 var faye = require('faye');
 
 var client;
@@ -249,7 +250,7 @@ module.exports = {
   }
 };
 
-},{"../shared/school":47,"./dead-reckoning":2,"./messages":5,"./viewport":7}],7:[function(require,module,exports){
+},{"../shared/school":48,"./dead-reckoning":2,"./messages":5,"./viewport":7}],7:[function(require,module,exports){
 var element = null;
 
 var top = 0;
@@ -270,8 +271,6 @@ module.exports = {
     left = newLeft;
     bottom = newBottom;
     right = newRight;
-
-    console.log(top, left, bottom, right);
 
     viewportWidth = right - left;
     viewportHeight = bottom - top;
@@ -3343,10 +3342,15 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],46:[function(require,module,exports){
-var SCHOOL_MIN_X = 0;
-var SCHOOL_MAX_X = 500;
-var SCHOOL_MIN_Y = 0;
-var SCHOOL_MAX_Y = 500;
+module.exports = {
+  WORLD_MAX_X: 1000,
+  WORLD_MAX_Y: 100,
+  WINDOW_DEFAULT_WIDTH: 100,
+  WINDOW_DEFAULT_HEIGHT: 100
+};
+
+},{}],47:[function(require,module,exports){
+var config = require('./config');
 
 // Gets a random number between a and b
 var rand = function(a, b) {
@@ -3364,15 +3368,9 @@ var Fish = function(options) {
 
   this.id = Math.floor(Math.random() * 100000);
   
-  // the boundaries for where the fish can move in the world
-  this.minX = this.options.minX; 
-  this.minY = this.options.minY;
-  this.maxX = this.options.maxX;
-  this.maxY = this.options.maxY;
-  
   // the x and y position
-  this.x = rand(this.minX, this.maxX);
-  this.y = rand(this.minY, this.maxY);
+  this.x = rand(0, config.WORLD_MAX_X);
+  this.y = rand(0, config.WORLD_MAX_Y);
 
   // the direction the fish is moving, could be left or right
   this.vx = this.options.restingSpeed * rand(0.9, 1.1);
@@ -3490,19 +3488,19 @@ Fish.prototype.doTurn = function() {
 
 Fish.prototype.checkCollision = function() {
   // Wall collision
-  if(this.x < this.minX) {
-    this.x = this.minX;
+  if(this.x < 0) {
+    this.x = 0;
     this.vx = Math.abs(this.vx);
-  } else if(this.x > this.maxX) {
-    this.x = this.maxX;
+  } else if(this.x > config.WORLD_MAX_X) {
+    this.x = config.WORLD_MAX_X;
     this.vx = -Math.abs(this.vx);
   }
   
-  if(this.y < this.minY) {
-    this.y = this.minY;
+  if(this.y < 0) {
+    this.y = 0;
     this.vy = Math.abs(this.vy);
-  } else if(this.y > this.maxY) {
-    this.y = this.maxY;
+  } else if(this.y > config.WORLD_MAX_Y) {
+    this.y = config.WORLD_MAX_Y;
     this.vy = -Math.abs(this.vy);
   }
 };
@@ -3536,7 +3534,7 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   this.feeding = true;
   var closestFeedPointX = feedPoints[closestIndex].x;
   var approachAngle = Math.atan2(-this.y, closestFeedPointX - this.x);
-  var velocity = 50;
+  var velocity = 10;
   this.vx = velocity * Math.cos(approachAngle);
   this.vy = velocity * Math.sin(approachAngle);
 };
@@ -3564,7 +3562,7 @@ Fish.prototype.deserializeExtraFields = function(serverData) {
 
 module.exports = Fish;
 
-},{}],47:[function(require,module,exports){
+},{"./config":46}],48:[function(require,module,exports){
 var Fish = require('./fish');
 
 var school = null;
@@ -3643,4 +3641,4 @@ module.exports = {
   }
 };
 
-},{"./fish":46}]},{},[3]);
+},{"./fish":47}]},{},[3]);

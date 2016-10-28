@@ -8,12 +8,12 @@ module.exports = {
   },
 
   onClick: function(evt) {
-    school.addFeedPoint(evt.clientX);
-
     var globalCoords = viewport.toGlobalCoords({
       x: evt.clientX,
       y: evt.clientY
     });
+    
+    school.addFeedPoint(globalCoords.x);
 
     // now publish to the server
     messages.publish({

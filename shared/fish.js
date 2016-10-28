@@ -172,7 +172,7 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   }
 
   // if we're pretty close, don't attempt to turn so the fish overshoots a little, making it look more realistic
-  if(closestXDistance < 20 && this.y < 20) {
+  if(closestXDistance < config.FISH_FOOD_OVERSHOOT && this.y < config.FISH_FOOD_OVERSHOOT) {
     this.feeding = false;
     return;
   }
@@ -182,7 +182,7 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   this.feeding = true;
   var closestFeedPointX = feedPoints[closestIndex].x;
   var approachAngle = Math.atan2(-this.y, closestFeedPointX - this.x);
-  var velocity = 10;
+  var velocity = config.FISH_FOOD_APPROACH_SPEED;
   this.vx = velocity * Math.cos(approachAngle);
   this.vy = velocity * Math.sin(approachAngle);
 };

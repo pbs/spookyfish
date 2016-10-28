@@ -25,17 +25,19 @@ module.exports = {
     viewportHeight = bottom - top;
   },
 
-  containsBoid: function(boid) {
-    return boid[0] >= left && boid[0] < right && boid[1] >= top && boid[1] < bottom;
+  containsFish: function(fish) {
+    return fish.x >= left && fish.x < right && fish.y >= top && fish.y < bottom;
   },
 
-  toLocalCoords: function(boid) {
+  attachLocalCoords: function(fish) {
     var elementWidth = window.innerWidth;
     var elementHeight = window.innerHeight;
-    var x = (boid[0] - left) / viewportWidth * elementWidth;
-    var y = (boid[1] - top) / viewportHeight * elementHeight;
-    boid[0] = x;
-    boid[1] = y;
-    return boid;
+    return {
+      fish: fish,
+      localCoords: {
+        x: (fish.x - left) / viewportWidth * elementWidth,
+        y: (fish.y - top) / viewportHeight * elementHeight
+      }
+    }
   }
 };

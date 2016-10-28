@@ -89,9 +89,12 @@ module.exports = {
 
     school
       .all()
-      .forEach(function(fish, index) {
-        fish.sprite.x = fish.x;
-        fish.sprite.y = fish.y;
+      .map(viewport.attachLocalCoords)
+      .forEach(function(attached, index) {
+        var localCoords = attached.localCoords;
+        var fish = attached.fish;
+        fish.sprite.x = localCoords.x;
+        fish.sprite.y = localCoords.y;
       
         //thisFish.rotation = Math.sin(boid[3]);
         

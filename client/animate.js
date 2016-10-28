@@ -1,6 +1,7 @@
 var config = require('../shared/config');
 var viewport = require('./viewport');
 var school = require('../shared/school');
+var random = require('../shared/random');
 
 var boundingRect;
 var WIDTH;
@@ -86,9 +87,8 @@ module.exports = {
     stage.addChild(castle);
 
     var seaweedSprite;
-    for(var x = Math.random() * 100; x < window.innerWidth; x += Math.random() * 200 + 400) {
-      var index = Math.floor(Math.random() * seaweed.length);
-      seaweedSprite = new PIXI.Sprite(PIXI.loader.resources[seaweed[index]].texture);
+    for(var x = random.between(0, 100); x < window.innerWidth; x += random.between(400, 600)) {
+      seaweedSprite = new PIXI.Sprite(PIXI.loader.resources[random.fromArray(seaweed)].texture);
       seaweedSprite.scale.x = seaweedSprite.scale.y = 0.2;
       seaweedSprite.anchor.y = 1.0;
       seaweedSprite.x = x;

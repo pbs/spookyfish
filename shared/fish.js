@@ -136,12 +136,10 @@ Fish.prototype.doTurn = function() {
 
 Fish.prototype.checkCollision = function() {
   // Wall collision
-  if(this.x < 0) {
-    this.x = 0;
-    this.vx = Math.abs(this.vx);
-  } else if(this.x > config.WORLD_MAX_X) {
-    this.x = config.WORLD_MAX_X;
-    this.vx = -Math.abs(this.vx);
+  if(this.x < -5) {
+    this.x = config.WORLD_MAX_X + 4;
+  } else if(this.x > config.WORLD_MAX_X + 5) {
+    this.x = -4;
   }
   
   if(this.y < 0) {

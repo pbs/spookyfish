@@ -54,7 +54,6 @@ module.exports = {
         
     school.all().forEach(function(fish, index){
       var randomFish = fishImages[fish.id % fishImages.length];
-      var randomScale = Math.floor(Math.random() * (5 - 2) - 2 ) / 5;
             
       fish.sprite = new PIXI.Sprite(
         PIXI.loader.resources[randomFish].texture
@@ -63,9 +62,8 @@ module.exports = {
       fish.sprite.x = fish.x;
       fish.sprite.y = fish.y;
       fish.sprite.anchor.set(0.5);
-      fish.randomScale = randomScale;
       
-      fish.sprite.scale.set(randomScale, randomScale);
+      fish.sprite.scale.set(fish.scale, fish.scale);
             
       stage.addChild(fish.sprite);
     });

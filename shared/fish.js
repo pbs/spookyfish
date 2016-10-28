@@ -38,6 +38,9 @@ var Fish = function(options) {
   // make the fish drift a little upwards
   this.vy = rand(-3.0, 3.0);
 
+  // the size of the fish
+  this.scale = Math.floor(Math.random() * (5 - 2) - 2 ) / 5;
+
   // the speed at which the fish drifts normally
   this.individualRestingSpeed = Math.abs(this.vx);
 
@@ -64,6 +67,7 @@ Fish.serializableFields = [
   'y',
   'vx',
   'vy',
+  'scale',
   'individualRestingSpeed',
   'speedAfterTurn',
   'turnDirection',

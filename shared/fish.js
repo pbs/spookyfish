@@ -3,11 +3,13 @@ var viewport = require('../client/viewport');
 var messages = require('../client/messages');
 var random = require('./random');
 
+var GLOBAL_ID = 1;
+
 // Stubs out a fish, giving it a random id, position, and movement parameters
 var Fish = function(options) {
   this.options = options;
 
-  this.id = Math.floor(random.between(0, 100000));
+  this.id = GLOBAL_ID++;
   
   // the x and y position
   this.x = random.between(0, config.WORLD_MAX_X);

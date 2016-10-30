@@ -1,8 +1,8 @@
-var config = require('../shared/config');
+var config = require('./config');
 var viewport = require('./viewport');
-var school = require('../shared/school');
-var sub = require('../shared/sub');
-var random = require('../shared/random');
+var school = require('./school');
+var sub = require('./sub');
+var random = require('./random');
 
 var boundingRect;
 var WIDTH;

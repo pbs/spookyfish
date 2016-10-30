@@ -1,4 +1,4 @@
-var school = require('../shared/school');
+var school = require('./school');
 var viewport = require('./viewport');
 var messages = require('./messages');
 

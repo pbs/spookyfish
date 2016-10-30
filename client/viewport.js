@@ -1,4 +1,4 @@
-var config = require('../shared/config');
+var config = require('./config');
 var element = null;
 
 var top = 0;

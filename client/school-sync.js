@@ -1,8 +1,8 @@
 var viewport = require('./viewport');
 var deadReckoning = require('./dead-reckoning');
 var messages = require('./messages');
-var school = require('../shared/school');
-var sub = require('../shared/sub');
+var school = require('./school');
+var sub = require('./sub');
 
 var neverSynced = true;
 

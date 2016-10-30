@@ -114,6 +114,7 @@ Fish.prototype.isTransitioning = function() {
     }
 
     console.log('Pushing', this.id, 'from', viewport.screenIndex(), 'to', newFishScreenIndex);
+    console.log('  x=', this.x, 'y=', this.y, 'vx=', this.vx);
 
     // Update position through a pub-sub event
     messages.publish(newFishScreenIndex, {

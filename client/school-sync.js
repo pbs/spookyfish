@@ -10,7 +10,9 @@ var neverSynced = true;
 // attempts to rectify this on the client.
 module.exports = {
   init: function() {
-    messages.subscribe(function(data) {
+    // subscribe only to my viewport
+    var viewportIndex = viewport.screenIndex();
+    messages.subscribe(viewportIndex, function(data) {
       // when a message is received, reset feed points to match what the server has, and then attempt to fix fish
       // positions
       if (data.type === 'feedPoint') {
@@ -25,6 +27,7 @@ module.exports = {
   },
 
   receiveVisibleSchoolUpdate: function(newFish) {
+    console.log('Received news of fish ', newFish.id);
     // update the school's fish reference
     school.getById(newFish.id).deserializeExtraFields(newFish);
     // place fish via dead reckoning

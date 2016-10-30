@@ -1,4 +1,5 @@
 var config = require('./config');
+var viewport = require('../client/viewport');
 var messages = require('../client/messages');
 var random = require('./random');
 
@@ -79,8 +80,8 @@ Fish.prototype.update = function() {
     this.vy = 0;
   } else {
     // Movement quirks
-    this.doTurn();
-    this.doMiniStartle();
+    //this.doTurn();
+    //this.doMiniStartle();
 
     // Every once and a while turn drift in a different direction vertically
     if(random.maybe(0.01)) {
@@ -105,7 +106,7 @@ Fish.prototype.isTransitioning = function() {
   this.transitioned = this.transitioning;
   this.transitioning = ((xrange >= 97 && xdir === 1) || (xrange <=3 && xdir === -1));
   if (!this.transitioned && this.transitioning) {
-
+    console.log('Attempting to push ', this.id, 'across');
     // Shove the fish across the screen chasm to the next screen and
     // increase velocity for good measure.
     if (xdir === -1) {
@@ -116,8 +117,15 @@ Fish.prototype.isTransitioning = function() {
       this.vx *= 1.2;
     }
 
+    var newFishScreenIndex = null;
+    if(xdir === -1) {
+      newFishScreenIndex = (viewport.screenIndex() + config.VIEWPORT_COUNT - 1) % config.VIEWPORT_COUNT;
+    } else {
+      newFishScreenIndex = (viewport.screenIndex() + 1) % config.VIEWPORT_COUNT;
+    }
+
     // Update position through a pub-sub event
-    messages.publish({
+    messages.publish(newFishScreenIndex, {
       type: 'clientPosition',
       fish: this.serialize()
     });

@@ -106,14 +106,14 @@ Fish.prototype.isTransitioning = function() {
   this.transitioned = this.transitioning;
   this.transitioning = ((xrange >= 97 && xdir === 1) || (xrange <=3 && xdir === -1));
   if (!this.transitioned && this.transitioning) {
-    console.log('Attempting to push ', this.id, 'across');
-
     var newFishScreenIndex = null;
     if(xdir === -1) {
       newFishScreenIndex = (viewport.screenIndex() + config.VIEWPORT_COUNT - 1) % config.VIEWPORT_COUNT;
     } else {
       newFishScreenIndex = (viewport.screenIndex() + 1) % config.VIEWPORT_COUNT;
     }
+
+    console.log('Pushing', this.id, 'from', viewport.screenIndex(), 'to', newFishScreenIndex);
 
     // Update position through a pub-sub event
     messages.publish(newFishScreenIndex, {

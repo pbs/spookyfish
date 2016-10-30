@@ -107,15 +107,6 @@ Fish.prototype.isTransitioning = function() {
   this.transitioning = ((xrange >= 97 && xdir === 1) || (xrange <=3 && xdir === -1));
   if (!this.transitioned && this.transitioning) {
     console.log('Attempting to push ', this.id, 'across');
-    // Shove the fish across the screen chasm to the next screen and
-    // increase velocity for good measure.
-    if (xdir === -1) {
-      this.x = this.x - 10;
-      this.vx *= 1.2;
-    } else {
-      this.x += 10;
-      this.vx *= 1.2;
-    }
 
     var newFishScreenIndex = null;
     if(xdir === -1) {

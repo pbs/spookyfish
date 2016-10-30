@@ -104,7 +104,7 @@ Fish.prototype.isTransitioning = function() {
   var xdir = Math.sign(this.vx);
 
   this.transitioned = this.transitioning;
-  this.transitioning = ((xrange >= 97 && xdir === 1) || (xrange <=3 && xdir === -1));
+  this.transitioning = ((xrange >= 97 && xdir === 1) || (xrange <=3 && xdir === -1)) && viewport.containsFish(this);
   if (!this.transitioned && this.transitioning) {
     var newFishScreenIndex = null;
     if(xdir === -1) {

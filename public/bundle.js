@@ -143,12 +143,12 @@ module.exports = {
 
 },{"./config":2,"./random":8,"./school":9,"./sub":10,"./viewport":12}],2:[function(require,module,exports){
 module.exports = {
-  WORLD_MAX_X: 200,
+  WORLD_MAX_X: 1000,
   WORLD_MAX_Y: 100,
   WINDOW_DEFAULT_WIDTH: 100,
   WINDOW_DEFAULT_HEIGHT: 100,
-  VIEWPORT_COUNT: 2,
-  FISH_COUNT: 20,
+  VIEWPORT_COUNT: 10,
+  FISH_COUNT: 100,
   FISH_RESTING_SPEED: 5,
   FISH_STARTLE_SPEED: 50,
   FISH_FOOD_APPROACH_SPEED: 30,

@@ -10,9 +10,9 @@ var Fish = function(options) {
   this.options = options;
 
   this.id = GLOBAL_ID++;
-  
+
   // the x and y position
-  this.x = random.between(0, config.WORLD_MAX_X);
+  this.x = this.id / config.FISH_COUNT * config.WORLD_MAX_X;
   this.y = random.between(0, config.WORLD_MAX_Y);
 
   // the direction the fish is moving, could be left or right

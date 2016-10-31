@@ -16,9 +16,9 @@ var HEIGHT = boundingRect.height;
 //canvas.setAttribute('height', HEIGHT);
 
 
+messages.init();
 school.init();
 sub.init();
-messages.init();
 tankSync.init();
 animate.load(function() {
   interaction.init();

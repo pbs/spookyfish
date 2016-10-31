@@ -11,6 +11,8 @@ var Fish = function(options) {
 
   this.id = GLOBAL_ID++;
 
+  random.seed(this.id);
+
   // the x and y position
   this.x = this.id / config.FISH_COUNT * config.WORLD_MAX_X;
   this.y = random.between(0, config.WORLD_MAX_Y);
@@ -20,9 +22,7 @@ var Fish = function(options) {
   if(random.maybe(0.5)) {
     this.vx *= -1;
   }
-
-  // make the fish drift a little upwards
-  this.vy = random.between(-3.0, 3.0);
+  this.vy = 0;
 
   // the size of the fish
   this.scale = Math.floor(Math.random() * (5 - 2) + 2 ) / 5;
@@ -84,11 +84,6 @@ Fish.prototype.update = function() {
     // Movement quirks
     //this.doTurn();
     //this.doMiniStartle();
-
-    // Every once and a while turn drift in a different direction vertically
-    if(random.maybe(0.01)) {
-      this.vy = random.between(-3.0, 3.0);
-    }
 
     // However, if we've gone too far vertically make the fish move back towards it's preferred depth
     if(Math.abs(this.preferredDepth - this.y) > 40 && !this.feeding) {
@@ -199,6 +194,7 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   // if there was no closest fish, nothing to do
   if(closestIndex === -1) {
     this.feeding = false;
+    this.vx = this.individualRestingSpeed;
     return;
   }
 

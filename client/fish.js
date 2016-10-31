@@ -18,7 +18,7 @@ var Fish = function(options) {
   this.y = random.between(0, config.WORLD_MAX_Y);
 
   // the direction the fish is moving, could be left or right
-  this.vx = config.FISH_RESTING_SPEED * random.between(0.9, 1.1);
+  this.vx = config.FISH_RESTING_SPEED * random.between(0.7, 1.3);
   if(random.maybe(0.5)) {
     this.vx *= -1;
   }
@@ -78,18 +78,15 @@ Fish.prototype.update = function() {
   this.x += this.vx * dt;
   this.y += this.vy * dt;
 
-  if (this.transitioning) {
-    // Do not drift or turn the fish if it is transitioning to a new screen
-    this.vy = 0;
-  } else {
-    // Movement quirks
-    //this.doTurn();
-    //this.doMiniStartle();
+  // Movement quirks
+  //this.doTurn();
+  //this.doMiniStartle();
 
-    // However, if we've gone too far vertically make the fish move back towards it's preferred depth
-    if(Math.abs(this.preferredDepth - this.y) > 40 && !this.feeding) {
-      this.vy = Math.sign(this.preferredDepth - this.y) * random.between(10, 15);
-    }
+  // However, if we've gone too far vertically make the fish move back towards it's preferred depth
+  if(Math.abs(this.preferredDepth - this.y) > 5 && !this.feeding) {
+    this.vy = Math.sign(this.preferredDepth - this.y) * random.between(1, 5);
+  } else {
+    this.vy = 0;
   }
 
   this.checkCollision();

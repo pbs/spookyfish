@@ -12,18 +12,14 @@ module.exports = {
   init: function() {
     // subscribe only to my viewport
     var viewportIndex = viewport.screenIndex();
+    
     messages.onTransition(viewportIndex, function(data) {
-      // when a message is received, reset feed points to match what the server has, and then attempt to fix fish
-      // positions
-      if (data.type === 'feedPoint') {
-        school.setFeedPoints([data.x]);
-      }
-
-      // when a fish has crossed the boundary between screens, update its position
-      if (data.type === 'clientPosition') {
-        this.receiveVisibleSchoolUpdate(data.fish);
-      }
+      this.receiveVisibleSchoolUpdate(data.fish);
     }.bind(this));
+
+    messages.onFeedPoint(function(data) {
+      school.addFeedPoint(data.x);
+    });
   },
 
   receiveVisibleSchoolUpdate: function(newFish) {

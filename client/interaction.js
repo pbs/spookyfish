@@ -16,9 +16,6 @@ module.exports = {
     school.addFeedPoint(globalCoords.x);
 
     // now publish to the server
-    messages.publish({
-      type: 'feedPoint',
-      x: globalCoords.x
-    });
+    messages.sendFeedPoint({ x: globalCoords.x });
   },
 };

@@ -14,5 +14,13 @@ module.exports = {
 
   sendTransition: function(viewportIndex, data) {
     client.publish('/viewport/' + viewportIndex, data);
-  }
+  },
+
+  onFeedPoint: function(action) {
+    return client.subscribe('/feed-points', action);
+  },
+
+  sendFeedPoint: function(data) {
+    client.publish('/feed-points', data);
+  },
 };

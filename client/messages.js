@@ -23,4 +23,12 @@ module.exports = {
   sendFeedPoint: function(data) {
     client.publish('/feed-points', data);
   },
+
+  onSubTransition: function(action) {
+    return client.subscribe('/sub', action);
+  },
+
+  sendSubTransition: function(data) {
+    return client.publish('/sub', data);
+  },
 };

@@ -2,7 +2,8 @@
   "dependencies": {
     "boids": "^2.0.0",
     "express": "^4.14.0",
-    "faye": "^1.2.3"
+    "faye": "^1.2.3",
+    "seedrandom": "^2.4.2"
   },
   "scripts": {
     "bundle": "browserify client/index.js > public/bundle.js",

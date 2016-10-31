@@ -8,11 +8,11 @@ module.exports = {
     client = new faye.Client(location.origin + '/faye');
   },
 
-  subscribe: function(viewportIndex, action) {
-    return client.subscribe('/messages/' + viewportIndex, action);
+  onTransition: function(viewportIndex, action) {
+    return client.subscribe('/viewport/' + viewportIndex, action);
   },
 
-  publish: function(viewportIndex, data) {
-    client.publish('/messages/' + viewportIndex, data);
+  sendTransition: function(viewportIndex, data) {
+    client.publish('/viewport/' + viewportIndex, data);
   }
 };

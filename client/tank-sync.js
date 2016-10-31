@@ -12,7 +12,7 @@ module.exports = {
   init: function() {
     // subscribe only to my viewport
     var viewportIndex = viewport.screenIndex();
-    messages.subscribe(viewportIndex, function(data) {
+    messages.onTransition(viewportIndex, function(data) {
       // when a message is received, reset feed points to match what the server has, and then attempt to fix fish
       // positions
       if (data.type === 'feedPoint') {

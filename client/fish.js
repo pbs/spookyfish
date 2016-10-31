@@ -119,7 +119,7 @@ Fish.prototype.isTransitioning = function() {
     console.log('  x=', this.x, 'y=', this.y, 'vx=', this.vx);
 
     // Update position through a pub-sub event
-    messages.publish(newFishScreenIndex, {
+    messages.sendTransition(newFishScreenIndex, {
       type: 'clientPosition',
       fish: this.serialize()
     });

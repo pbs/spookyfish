@@ -25,7 +25,7 @@ var Fish = function(options) {
   this.vy = 0;
 
   // the size of the fish
-  this.scale = Math.floor(Math.random() * (5 - 2) + 2 ) / 5;
+  this.scale = random.between(0.3, 1.0);
 
   // the speed at which the fish drifts normally
   this.individualRestingSpeed = Math.abs(this.vx);

@@ -201,24 +201,25 @@ var Fish = function(options) {
 
   this.id = GLOBAL_ID++;
 
+  random.seed(this.id);
+
   // the x and y position
   this.x = this.id / config.FISH_COUNT * config.WORLD_MAX_X;
   this.y = random.between(0, config.WORLD_MAX_Y);
 
   // the direction the fish is moving, could be left or right
-  this.vx = config.FISH_RESTING_SPEED * random.between(0.9, 1.1);
+  this.vx = config.FISH_RESTING_SPEED * random.between(0.7, 1.3);
   if(random.maybe(0.5)) {
     this.vx *= -1;
   }
-
-  // make the fish drift a little upwards
-  this.vy = random.between(-3.0, 3.0);
+  this.vy = 0;
 
   // the size of the fish
-  this.scale = Math.floor(Math.random() * (5 - 2) + 2 ) / 5;
+  this.scale = random.between(0.3, 1.0);
 
   // the speed at which the fish drifts normally
   this.individualRestingSpeed = Math.abs(this.vx);
+  this.individualDirection = Math.sign(this.vx);
 
   // a flag to keep track of the speed a fish should have after it makes a turn around
   this.speedAfterTurn = 0;
@@ -267,23 +268,15 @@ Fish.prototype.update = function() {
   this.x += this.vx * dt;
   this.y += this.vy * dt;
 
-  if (this.transitioning) {
-    // Do not drift or turn the fish if it is transitioning to a new screen
-    this.vy = 0;
+  // Movement quirks
+  //this.doTurn();
+  //this.doMiniStartle();
+
+  // However, if we've gone too far vertically make the fish move back towards it's preferred depth
+  if(Math.abs(this.preferredDepth - this.y) > 5 && !this.feeding) {
+    this.vy = Math.sign(this.preferredDepth - this.y) * random.between(1, 5);
   } else {
-    // Movement quirks
-    //this.doTurn();
-    //this.doMiniStartle();
-
-    // Every once and a while turn drift in a different direction vertically
-    if(random.maybe(0.01)) {
-      this.vy = random.between(-3.0, 3.0);
-    }
-
-    // However, if we've gone too far vertically make the fish move back towards it's preferred depth
-    if(Math.abs(this.preferredDepth - this.y) > 40 && !this.feeding) {
-      this.vy = Math.sign(this.preferredDepth - this.y) * random.between(10, 15);
-    }
+    this.vy = 0;
   }
 
   this.checkCollision();
@@ -389,6 +382,7 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   // if there was no closest fish, nothing to do
   if(closestIndex === -1) {
     this.feeding = false;
+    this.vx = this.individualRestingSpeed * this.individualDirection;
     return;
   }
 

@@ -43,6 +43,10 @@ module.exports = {
     return fish.x >= left && fish.x < right && fish.y >= top && fish.y < bottom;
   },
 
+  ownsFish: function(fish) {
+    return Math.floor(fish.id / config.FISH_COUNT) === this.screenIndex();
+  },
+
   attachLocalCoords: function(fish) {
     var elementWidth = window.innerWidth;
     var elementHeight = window.innerHeight;

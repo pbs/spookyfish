@@ -3,7 +3,7 @@ var viewport = require('../client/viewport');
 var messages = require('../client/messages');
 var random = require('./random');
 
-var GLOBAL_ID = 1;
+var GLOBAL_ID = 0;
 
 // Stubs out a fish, giving it a random id, position, and movement parameters
 var Fish = function(options) {
@@ -106,8 +106,8 @@ Fish.prototype.isTransitioning = function() {
   var xdir = Math.sign(this.vx);
 
   this.transitioned = this.transitioning;
-  this.transitioning = ((xrange >= 97 && xdir === 1) || (xrange <=3 && xdir === -1)) && viewport.containsFish(this);
-  if (!this.transitioned && this.transitioning) {
+  this.transitioning = ((xrange >= 97 && xdir === 1) || (xrange <=3 && xdir === -1));
+  if (!this.transitioned && this.transitioning && viewport.ownsFish(this)) {
     var newFishScreenIndex = null;
     if(xdir === -1) {
       newFishScreenIndex = (viewport.screenIndex() + config.VIEWPORT_COUNT - 1) % config.VIEWPORT_COUNT;
@@ -119,10 +119,7 @@ Fish.prototype.isTransitioning = function() {
     console.log('  x=', this.x, 'y=', this.y, 'vx=', this.vx);
 
     // Update position through a pub-sub event
-    messages.sendTransition(newFishScreenIndex, {
-      type: 'clientPosition',
-      fish: this.serialize()
-    });
+    messages.sendTransition({ fish: this.serialize() });
   }
 };
 

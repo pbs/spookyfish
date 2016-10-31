@@ -10,10 +10,7 @@ var neverSynced = true;
 // attempts to rectify this on the client.
 module.exports = {
   init: function() {
-    // subscribe only to my viewport
-    var viewportIndex = viewport.screenIndex();
-    
-    messages.onTransition(viewportIndex, function(data) {
+    messages.onTransition(function(data) {
       this.receiveVisibleSchoolUpdate(data.fish);
     }.bind(this));
 

@@ -8,12 +8,12 @@ module.exports = {
     client = new faye.Client(location.origin + '/faye');
   },
 
-  onTransition: function(viewportIndex, action) {
-    return client.subscribe('/viewport/' + viewportIndex, action);
+  onTransition: function(action) {
+    return client.subscribe('/fish', action);
   },
 
-  sendTransition: function(viewportIndex, data) {
-    client.publish('/viewport/' + viewportIndex, data);
+  sendTransition: function(data) {
+    client.publish('/fish', data);
   },
 
   onFeedPoint: function(action) {

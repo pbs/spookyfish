@@ -29,6 +29,7 @@ var Fish = function(options) {
 
   // the speed at which the fish drifts normally
   this.individualRestingSpeed = Math.abs(this.vx);
+  this.individualDirection = Math.sign(this.vx);
 
   // a flag to keep track of the speed a fish should have after it makes a turn around
   this.speedAfterTurn = 0;
@@ -194,7 +195,7 @@ Fish.prototype.approachFeedPoints = function(feedPoints) {
   // if there was no closest fish, nothing to do
   if(closestIndex === -1) {
     this.feeding = false;
-    this.vx = this.individualRestingSpeed;
+    this.vx = this.individualRestingSpeed * this.individualDirection;
     return;
   }
 

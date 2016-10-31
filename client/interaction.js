@@ -1,4 +1,4 @@
-var school = require('../shared/school');
+var school = require('./school');
 var viewport = require('./viewport');
 var messages = require('./messages');
 
@@ -16,9 +16,6 @@ module.exports = {
     school.addFeedPoint(globalCoords.x);
 
     // now publish to the server
-    messages.publish({
-      type: 'feedPoint',
-      x: globalCoords.x
-    });
+    messages.sendFeedPoint({ x: globalCoords.x });
   },
 };

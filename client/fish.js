@@ -1,14 +1,18 @@
 var config = require('./config');
+var viewport = require('../client/viewport');
+var messages = require('../client/messages');
 var random = require('./random');
+
+var GLOBAL_ID = 0;
 
 // Stubs out a fish, giving it a random id, position, and movement parameters
 var Fish = function(options) {
   this.options = options;
 
-  this.id = Math.floor(random.between(0, 100000));
-  
+  this.id = GLOBAL_ID++;
+
   // the x and y position
-  this.x = random.between(0, config.WORLD_MAX_X);
+  this.x = this.id / config.FISH_COUNT * config.WORLD_MAX_X;
   this.y = random.between(0, config.WORLD_MAX_Y);
 
   // the direction the fish is moving, could be left or right
@@ -40,6 +44,12 @@ var Fish = function(options) {
 
   // whether or not it's in "startled mode"
   this.startled = false;
+
+  // the previous transition state
+  this.transitioned = false;
+
+  // whether or not it's transitioning to a new viewport
+  this.transitioning = false;
 };
 
 // The list of fields that we want to share between the server and the client
@@ -61,25 +71,57 @@ Fish.serializableFields = [
 Fish.prototype.update = function() {
   var dt = 1 / 60;
 
+  this.isTransitioning();
+
   // basic motion
   this.x += this.vx * dt;
   this.y += this.vy * dt;
 
-  this.doTurn();
-  this.doMiniStartle();
+  if (this.transitioning) {
+    // Do not drift or turn the fish if it is transitioning to a new screen
+    this.vy = 0;
+  } else {
+    // Movement quirks
+    //this.doTurn();
+    //this.doMiniStartle();
 
-  // Every once and a while turn drift in a different direction vertically
-  if(random.maybe(0.01)) {
-    this.vy = random.between(-3.0, 3.0);
-  }
+    // Every once and a while turn drift in a different direction vertically
+    if(random.maybe(0.01)) {
+      this.vy = random.between(-3.0, 3.0);
+    }
 
-  // however, if we've gone too far vertically make the fish move back towards it's preferred depth
-  if(Math.abs(this.preferredDepth - this.y) > 40 && !this.feeding) {
-    this.vy = Math.sign(this.preferredDepth - this.y) * random.between(10, 15);
+    // However, if we've gone too far vertically make the fish move back towards it's preferred depth
+    if(Math.abs(this.preferredDepth - this.y) > 40 && !this.feeding) {
+      this.vy = Math.sign(this.preferredDepth - this.y) * random.between(10, 15);
+    }
   }
 
   this.checkCollision();
-}
+
+};
+
+// Calculate if the current fish is ready to transition to another client screen
+Fish.prototype.isTransitioning = function() {
+  var xrange = this.x % config.WINDOW_DEFAULT_WIDTH;
+  var xdir = Math.sign(this.vx);
+
+  this.transitioned = this.transitioning;
+  this.transitioning = ((xrange >= 97 && xdir === 1) || (xrange <=3 && xdir === -1));
+  if (!this.transitioned && this.transitioning && viewport.ownsFish(this)) {
+    var newFishScreenIndex = null;
+    if(xdir === -1) {
+      newFishScreenIndex = (viewport.screenIndex() + config.VIEWPORT_COUNT - 1) % config.VIEWPORT_COUNT;
+    } else {
+      newFishScreenIndex = (viewport.screenIndex() + 1) % config.VIEWPORT_COUNT;
+    }
+
+    console.log('Pushing', this.id, 'from', viewport.screenIndex(), 'to', newFishScreenIndex);
+    console.log('  x=', this.x, 'y=', this.y, 'vx=', this.vx);
+
+    // Update position through a pub-sub event
+    messages.sendTransition({ fish: this.serialize() });
+  }
+};
 
 // Handles startling logic. Every so often, the fish will get scared and move faster to get away!
 Fish.prototype.doMiniStartle = function() {

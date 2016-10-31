@@ -1,3 +1,4 @@
+var config = require('./config');
 var element = null;
 
 var top = 0;
@@ -13,6 +14,21 @@ module.exports = {
     element = newElement;
   },
 
+  screenIndex: function() {
+    var index = Number(location.hash.substring(1))
+    if(isNaN(index)) {
+      index = 0;
+    }
+    return index;
+  },
+
+  fromHash: function() {
+    var index = this.screenIndex();
+    var screenLeft = index * config.WINDOW_DEFAULT_WIDTH;
+    var screenRight = screenLeft + config.WINDOW_DEFAULT_WIDTH;
+    this.setBoundaries(0, screenLeft, config.WINDOW_DEFAULT_HEIGHT, screenRight);
+  },
+
   setBoundaries: function(newTop, newLeft, newBottom, newRight) {
     top = newTop;
     left = newLeft;
@@ -25,6 +41,10 @@ module.exports = {
 
   containsFish: function(fish) {
     return fish.x >= left && fish.x < right && fish.y >= top && fish.y < bottom;
+  },
+
+  ownsFish: function(fish) {
+    return Math.floor(fish.id / config.FISH_COUNT) === this.screenIndex();
   },
 
   attachLocalCoords: function(fish) {

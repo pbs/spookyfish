@@ -7,6 +7,7 @@ var feedPoints = null;
 module.exports = {
   // creates a new school of fish
   init: function() {
+    window.school = this;
     school = [];
     feedPoints = [];
     for(var i = 0; i < config.FISH_COUNT; i++) {
@@ -39,6 +40,13 @@ module.exports = {
   // gets a single school member
   get: function(i) {
     return school[i];
+  },
+
+  // gets a single school member by its ID
+  getById: function(id) {
+    return school.find(function (fish) {
+      return fish.id == id;
+    });
   },
 
   // adds a new feeding point

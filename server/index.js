@@ -1,7 +1,7 @@
 var http = require('http');
 var express = require('express');
 var faye = require('faye');
-var schoolManager = require('./school-manager');
+var port = process.env.PORT || 5000;
 
 console.log('Starting express app...');
 var app = express();
@@ -16,9 +16,6 @@ var pubsub = new faye.NodeAdapter({
 });
 pubsub.attach(server);
 
-server.listen(process.env.PORT || 8080);
- 
-console.log('Starting school manager');
-schoolManager.init(pubsub.getClient(), 500, 500);
+server.listen(port);
 
-console.log('And we\'re ready! Go check out localhost:8080');
+console.log('And we\'re ready! Go check out localhost:' + port);

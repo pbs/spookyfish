@@ -1,8 +1,8 @@
 var viewport = require('./viewport');
-var school = require('../shared/school');
-var sub = require('../shared/sub');
+var school = require('./school');
+var sub = require('./sub');
 var messages = require('./messages');
-var schoolSync = require('./school-sync');
+var tankSync = require('./tank-sync');
 var animate = require('./animate');
 var interaction = require('./interaction');
 //var PIXI = require('pixi.js');
@@ -16,10 +16,10 @@ var HEIGHT = boundingRect.height;
 //canvas.setAttribute('height', HEIGHT);
 
 
+messages.init();
 school.init();
 sub.init();
-messages.init();
-schoolSync.init();
+tankSync.init();
 animate.load(function() {
   interaction.init();
 });

@@ -1,8 +1,8 @@
-var config = require('../shared/config');
+var config = require('./config');
 var viewport = require('./viewport');
-var school = require('../shared/school');
-var sub = require('../shared/sub');
-var random = require('../shared/random');
+var school = require('./school');
+var sub = require('./sub');
+var random = require('./random');
 
 var boundingRect;
 var WIDTH;
@@ -50,18 +50,9 @@ module.exports = {
     renderer.autoResize = true;
     renderer.resize(window.innerWidth, window.innerHeight);
     
+    // setup the viewport by passing the canvas element + setting the viewport index from the screen hash /#0 vs /#1 etc.
     viewport.setElement(renderer.view);
-    
-    // things
-    var screenPosition = Number(location.hash.substring(1))
-    if(isNaN(screenPosition)) {
-      screenPosition = 0;
-    }
-    var screenLeft = screenPosition * config.WINDOW_DEFAULT_WIDTH;
-    var screenRight = screenLeft + config.WINDOW_DEFAULT_WIDTH;
-
-    viewport.setBoundaries(0, screenLeft, config.WINDOW_DEFAULT_HEIGHT, screenRight);
-    window.viewport = viewport;
+    viewport.fromHash();
 
     boundingRect = document.body.getBoundingClientRect();
     WIDTH = boundingRect.width;
